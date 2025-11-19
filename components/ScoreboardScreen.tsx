@@ -18,24 +18,24 @@ export default function ScoreboardScreen({
   const leader = getLeader(game.players);
 
   return (
-    <div className="flex min-h-screen flex-col px-4 py-4">
+    <div className="golf-course-bg flex min-h-screen flex-col px-4 py-4">
       {/* Header */}
       <div className="mb-4 flex items-center justify-between">
         <button
           onClick={onBack}
-          className="flex items-center text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white"
+          className="flex items-center gap-2 rounded-xl bg-white/80 px-4 py-2 font-semibold text-[#2d5016] shadow-md hover:bg-white/90 dark:bg-gray-800/80 dark:text-green-300 dark:hover:bg-gray-800/90"
         >
           ← Game
         </button>
-        <span className="text-base font-medium text-gray-900 dark:text-white">
-          Scoreboard
+        <span className="rounded-xl bg-white/80 px-4 py-2 text-base font-bold text-[#2d5016] shadow-md dark:bg-gray-800/80 dark:text-green-300">
+          📋 Scoreboard
         </span>
       </div>
 
       {/* Hole Progress */}
       <div className="mb-6 text-center">
-        <div className="text-lg font-semibold text-gray-900 dark:text-white">
-          Hole {game.currentHole} of {game.holeCount}
+        <div className="inline-block rounded-xl bg-white/80 px-6 py-3 text-lg font-bold text-[#2d5016] shadow-lg dark:bg-gray-800/80 dark:text-green-300">
+          ⛳ Hole {game.currentHole} of {game.holeCount}
         </div>
       </div>
 
@@ -48,10 +48,10 @@ export default function ScoreboardScreen({
           return (
             <div
               key={player.id}
-              className={`rounded-lg border-2 p-4 ${
+              className={`rounded-2xl border-2 p-5 shadow-lg backdrop-blur-sm ${
                 isLeader
-                  ? "border-yellow-400 bg-yellow-50 dark:bg-yellow-900/20"
-                  : "border-gray-300 bg-white dark:border-gray-600 dark:bg-gray-800"
+                  ? "border-yellow-400 bg-gradient-to-br from-yellow-50/90 to-amber-50/90 dark:from-yellow-900/30 dark:to-amber-900/20"
+                  : "border-gray-300 bg-white/80 dark:border-gray-600 dark:bg-gray-800/80"
               }`}
             >
               <div className="mb-2 flex items-center justify-between">
@@ -78,9 +78,9 @@ export default function ScoreboardScreen({
       <div className="mt-auto space-y-3">
         <button
           onClick={onReturnToGame}
-          className="w-full rounded-lg border-2 border-gray-300 bg-white px-6 py-3 font-semibold text-gray-900 transition-colors hover:bg-gray-50 dark:border-gray-600 dark:bg-gray-800 dark:text-white dark:hover:bg-gray-700"
+          className="w-full rounded-xl bg-gradient-to-r from-[#2d5016] to-[#3d6b1f] px-6 py-4 text-lg font-bold text-white shadow-xl transition-all hover:from-[#3d6026] hover:to-[#4d7036] hover:shadow-2xl focus:outline-none focus:ring-4 focus:ring-[#2d5016]/50 dark:from-[#4a7c2a] dark:to-[#5a8c3a] dark:hover:from-[#5a8c3a] dark:hover:to-[#6a9c4a]"
         >
-          Return to Current Hole
+          ⛳ Return to Current Hole
         </button>
       </div>
     </div>

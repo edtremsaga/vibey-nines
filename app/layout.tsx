@@ -13,7 +13,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Nines Golf - Golf Betting Game",
+  title: "Nines Golf - Golf Wagering Game by Vibey Craft",
   description: "Simple, fast, free Nines golf scoring app. Track your 3 or 4 player Nines game with automatic point calculation. Works offline, no account required.",
   manifest: "/manifest.json",
   themeColor: "#2d5016",

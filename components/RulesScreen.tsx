@@ -6,24 +6,29 @@ interface RulesScreenProps {
 
 export default function RulesScreen({ onBack }: RulesScreenProps) {
   return (
-    <div className="flex min-h-screen flex-col px-4 py-4">
+    <div className="golf-course-bg flex min-h-screen flex-col px-4 py-4">
       {/* Header */}
       <div className="mb-6 flex items-center justify-between">
         <button
           onClick={onBack}
-          className="flex items-center text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white"
+          className="flex items-center gap-2 rounded-xl bg-white/80 px-4 py-2 font-semibold text-[#2d5016] shadow-md hover:bg-white/90 dark:bg-gray-800/80 dark:text-green-300 dark:hover:bg-gray-800/90"
         >
           ← Back
         </button>
-        <span className="text-base font-medium text-gray-900 dark:text-white">Rules</span>
+        <span className="rounded-xl bg-white/80 px-4 py-2 text-base font-bold text-[#2d5016] shadow-md dark:bg-gray-800/80 dark:text-green-300">
+          📖 Rules
+        </span>
       </div>
 
       {/* Content */}
       <div className="mx-auto w-full max-w-md space-y-6">
-        <h2 className="text-2xl font-bold text-gray-900 dark:text-white">How to Play Nines</h2>
+        <h2 className="flex items-center gap-3 text-3xl font-bold text-[#2d5016] dark:text-green-300">
+          <span>⛳</span>
+          <span>How to Play Nines</span>
+        </h2>
 
         {/* Points System */}
-        <div className="rounded-lg border-2 border-gray-300 bg-white p-4 dark:border-gray-600 dark:bg-gray-800">
+        <div className="rounded-2xl border-2 border-gray-300 bg-white/80 backdrop-blur-sm p-6 shadow-xl dark:border-gray-600 dark:bg-gray-800/80">
           <h3 className="mb-3 font-semibold text-gray-900 dark:text-white">
             Points System (9 pts/hole)
           </h3>
@@ -49,8 +54,8 @@ export default function RulesScreen({ onBack }: RulesScreenProps) {
         </div>
 
         {/* Tie Rules */}
-        <div className="rounded-lg border-2 border-gray-300 bg-white p-4 dark:border-gray-600 dark:bg-gray-800">
-          <h3 className="mb-3 font-semibold text-gray-900 dark:text-white">Tie Rules</h3>
+        <div className="rounded-2xl border-2 border-gray-300 bg-white/80 backdrop-blur-sm p-6 shadow-xl dark:border-gray-600 dark:bg-gray-800/80">
+          <h3 className="mb-3 font-semibold text-gray-900 dark:text-white">⚖️ Tie Rules</h3>
           <p className="text-sm text-gray-600 dark:text-gray-400">
             The app automatically handles all tie scenarios. Points are distributed
             so that exactly 9 points are awarded per hole using integer values.
@@ -58,7 +63,7 @@ export default function RulesScreen({ onBack }: RulesScreenProps) {
         </div>
 
         {/* Tips */}
-        <div className="rounded-lg border-2 border-gray-300 bg-white p-4 dark:border-gray-600 dark:bg-gray-800">
+        <div className="rounded-2xl border-2 border-gray-300 bg-white/80 backdrop-blur-sm p-6 shadow-xl dark:border-gray-600 dark:bg-gray-800/80">
           <h3 className="mb-3 font-semibold text-gray-900 dark:text-white">Tips</h3>
           <ul className="ml-4 list-disc space-y-1 text-sm text-gray-600 dark:text-gray-400">
             <li>Every hole is worth 9 pts</li>

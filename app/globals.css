@@ -10,6 +10,12 @@
   --accent: #ffd700;
   --success: #22c55e;
   --border: #e5e7eb;
+  /* Golf Course Colors */
+  --golf-green: #2d5016;
+  --fairway-green: #3d6b1f;
+  --sky-blue: #87CEEB;
+  --sand-tan: #D2B48C;
+  --flag-red: #DC143C;
 }
 
 @theme inline {
@@ -43,6 +49,18 @@ body {
   background: var(--background);
   color: var(--foreground);
   font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+}
+
+/* Golf Course Background */
+.golf-course-bg {
+  background: linear-gradient(180deg, #87CEEB 0%, #E8F5E9 30%, #C8E6C9 100%);
+  min-height: 100vh;
+}
+
+@media (prefers-color-scheme: dark) {
+  .golf-course-bg {
+    background: linear-gradient(180deg, #1a2332 0%, #1e3a2f 30%, #1a2e1a 100%);
+  }
 }
 
 /* Ensure tap targets are at least 44px */
