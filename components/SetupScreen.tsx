@@ -45,7 +45,7 @@ export default function SetupScreen({ onStartGame, onViewRules }: SetupScreenPro
   };
 
   return (
-    <div className="golf-course-bg flex min-h-screen flex-col items-center justify-center px-4 py-8">
+    <div className="golf-course-bg screen-enter flex min-h-screen flex-col items-center justify-center px-4 py-8">
       <div className="w-full max-w-md space-y-5">
         {/* Header */}
         <div className="text-center">
@@ -84,7 +84,7 @@ export default function SetupScreen({ onStartGame, onViewRules }: SetupScreenPro
                 setPlayerCount(3);
                 setNameError(false);
               }}
-              className={`relative flex min-h-[52px] items-center justify-center rounded-xl border-2 px-4 py-2.5 text-base font-bold transition-all ${
+              className={`relative flex min-h-[52px] items-center justify-center rounded-xl border-2 px-4 py-2.5 text-base font-bold transition-all hover:scale-[1.02] active:scale-[0.98] ${
                 playerCount === 3
                   ? "border-[#2d5016] bg-gradient-to-br from-[#2d5016] to-[#3d6b1f] text-white shadow-lg dark:from-[#4a7c2a] dark:to-[#5a8c3a]"
                   : "border-gray-300 bg-white/90 text-gray-900 shadow-md hover:border-[#2d5016] hover:shadow-lg dark:border-gray-600 dark:bg-gray-700/90 dark:text-white dark:hover:border-green-400"
@@ -97,23 +97,15 @@ export default function SetupScreen({ onStartGame, onViewRules }: SetupScreenPro
                 setPlayerCount(4);
                 setNameError(false);
               }}
-              className={`relative flex min-h-[52px] items-center justify-center rounded-xl border-2 px-4 py-2.5 text-base font-bold transition-all ${
+              className={`relative flex min-h-[52px] items-center justify-center rounded-xl border-2 px-4 py-2.5 text-base font-bold transition-all hover:scale-[1.02] active:scale-[0.98] ${
                 playerCount === 4
                   ? "border-[#2d5016] bg-gradient-to-br from-[#2d5016] to-[#3d6b1f] text-white shadow-lg dark:from-[#4a7c2a] dark:to-[#5a8c3a]"
                   : "border-gray-300 bg-white/90 text-gray-900 shadow-md hover:border-[#2d5016] hover:shadow-lg dark:border-gray-600 dark:bg-gray-700/90 dark:text-white dark:hover:border-green-400"
               }`}
             >
               4 Players
-              {playerCount === 4 && (
-                <span className="absolute -right-2 -top-2 text-sm">⭐</span>
-              )}
             </button>
           </div>
-          {playerCount === 4 && (
-            <p className="mt-2 text-sm text-gray-600 dark:text-gray-400">
-              ⭐ 4-player support
-            </p>
-          )}
         </div>
 
         {/* Player Names */}
@@ -154,7 +146,7 @@ export default function SetupScreen({ onStartGame, onViewRules }: SetupScreenPro
           <div className="grid grid-cols-2 gap-3">
             <button
               onClick={() => setHoleCount(9)}
-              className={`flex min-h-[52px] items-center justify-center rounded-xl border-2 px-4 py-2.5 text-base font-bold transition-all ${
+              className={`flex min-h-[52px] items-center justify-center rounded-xl border-2 px-4 py-2.5 text-base font-bold transition-all hover:scale-[1.02] active:scale-[0.98] ${
                 holeCount === 9
                   ? "border-[#2d5016] bg-gradient-to-br from-[#2d5016] to-[#3d6b1f] text-white shadow-lg dark:from-[#4a7c2a] dark:to-[#5a8c3a]"
                   : "border-gray-300 bg-white/90 text-gray-900 shadow-md hover:border-[#2d5016] hover:shadow-lg dark:border-gray-600 dark:bg-gray-700/90 dark:text-white dark:hover:border-green-400"
@@ -164,7 +156,7 @@ export default function SetupScreen({ onStartGame, onViewRules }: SetupScreenPro
             </button>
             <button
               onClick={() => setHoleCount(18)}
-              className={`flex min-h-[52px] items-center justify-center rounded-xl border-2 px-4 py-2.5 text-base font-bold transition-all ${
+              className={`flex min-h-[52px] items-center justify-center rounded-xl border-2 px-4 py-2.5 text-base font-bold transition-all hover:scale-[1.02] active:scale-[0.98] ${
                 holeCount === 18
                   ? "border-[#2d5016] bg-gradient-to-br from-[#2d5016] to-[#3d6b1f] text-white shadow-lg dark:from-[#4a7c2a] dark:to-[#5a8c3a]"
                   : "border-gray-300 bg-white/90 text-gray-900 shadow-md hover:border-[#2d5016] hover:shadow-lg dark:border-gray-600 dark:bg-gray-700/90 dark:text-white dark:hover:border-green-400"
@@ -178,7 +170,7 @@ export default function SetupScreen({ onStartGame, onViewRules }: SetupScreenPro
         {/* Start Game Button */}
         <button
           onClick={handleStart}
-          className="flex min-h-[52px] w-full items-center justify-center rounded-xl bg-gradient-to-r from-[#2d5016] to-[#3d6b1f] px-4 py-2.5 text-base font-bold text-white shadow-lg transition-all hover:from-[#3d6026] hover:to-[#4d7036] hover:shadow-xl focus:outline-none focus:ring-4 focus:ring-[#2d5016]/50 dark:from-[#4a7c2a] dark:to-[#5a8c3a] dark:hover:from-[#5a8c3a] dark:hover:to-[#6a9c4a]"
+          className="flex min-h-[52px] w-full items-center justify-center rounded-xl bg-gradient-to-r from-[#2d5016] to-[#3d6b1f] px-4 py-2.5 text-base font-bold text-white shadow-lg transition-all hover:from-[#3d6026] hover:to-[#4d7036] hover:shadow-xl hover:scale-[1.02] active:scale-[0.98] focus:outline-none focus:ring-4 focus:ring-[#2d5016]/50 dark:from-[#4a7c2a] dark:to-[#5a8c3a] dark:hover:from-[#5a8c3a] dark:hover:to-[#6a9c4a]"
         >
           ⛳ START GAME ⛳
         </button>

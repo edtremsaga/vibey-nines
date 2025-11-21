@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Game } from "@/types/game";
 import { calculatePoints, getTieInfo } from "@/lib/scoring";
 import { addHoleScores, getLeader } from "@/lib/game-utils";
@@ -30,6 +30,19 @@ export default function GameScreen({
   const [scoreErrors, setScoreErrors] = useState<boolean[]>(() =>
     Array(game.playerCount).fill(false)
   );
+  const [showSuccessAnimation, setShowSuccessAnimation] = useState(false);
+  const [buttonPressed, setButtonPressed] = useState(false);
+  const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
+
+  // Auto-focus first input when entering new hole
+  useEffect(() => {
+    // Reset focus when points are cleared (new hole)
+    if (!points && inputRefs.current[0]) {
+      setTimeout(() => {
+        inputRefs.current[0]?.focus();
+      }, 100);
+    }
+  }, [points, game.currentHole]);
 
   useEffect(() => {
     setIsOffline(!navigator.onLine);
@@ -73,6 +86,13 @@ export default function GameScreen({
       const newErrors = [...scoreErrors];
       newErrors[index] = false;
       setScoreErrors(newErrors);
+      
+      // Auto-advance to next input if valid score entered
+      if (index < game.playerCount - 1 && inputRefs.current[index + 1]) {
+        setTimeout(() => {
+          inputRefs.current[index + 1]?.focus();
+        }, 50);
+      }
     } else {
       // Invalid input - show error
       const newErrors = [...scoreErrors];
@@ -89,11 +109,30 @@ export default function GameScreen({
     }
   };
 
+  const handleKeyDown = (index: number, e: React.KeyboardEvent<HTMLInputElement>) => {
+    // Enter key to calculate if all scores entered
+    if (e.key === "Enter" && hasScores) {
+      handleCalculate();
+    }
+    // Arrow keys to navigate
+    else if (e.key === "ArrowDown" && index < game.playerCount - 1) {
+      e.preventDefault();
+      inputRefs.current[index + 1]?.focus();
+    } else if (e.key === "ArrowUp" && index > 0) {
+      e.preventDefault();
+      inputRefs.current[index - 1]?.focus();
+    }
+  };
+
   const handleCalculate = () => {
     // Validate all scores are entered
     if (scores.some((s) => s === 0)) {
       return;
     }
+
+    // Button press animation
+    setButtonPressed(true);
+    setTimeout(() => setButtonPressed(false), 200);
 
     const calculatedPoints = calculatePoints(scores, game.playerCount);
     const tieData = getTieInfo(scores, calculatedPoints);
@@ -102,10 +141,18 @@ export default function GameScreen({
     setTieInfo(tieData);
     // Clear all errors when calculation succeeds
     setScoreErrors(Array(game.playerCount).fill(false));
+    
+    // Success animation
+    setShowSuccessAnimation(true);
+    setTimeout(() => setShowSuccessAnimation(false), 600);
   };
 
   const handleNextHole = () => {
     if (!points) return;
+
+    // Button press animation
+    setButtonPressed(true);
+    setTimeout(() => setButtonPressed(false), 200);
 
     const updatedGame = addHoleScores(game, scores);
     saveGame(updatedGame);
@@ -116,14 +163,16 @@ export default function GameScreen({
     setPoints(null);
     setTieInfo([]);
     setScoreErrors(Array(game.playerCount).fill(false));
+    setShowSuccessAnimation(false);
   };
 
   const leader = getLeader(game.players);
   const currentHoleIndex = game.currentHole - 1;
   const hasScores = scores.every((s) => s > 0);
+  const progressPercentage = ((game.currentHole - 1) / game.holeCount) * 100;
 
   return (
-    <div className="golf-course-bg flex min-h-screen flex-col px-4 py-4">
+    <div className="golf-course-bg screen-enter flex min-h-screen flex-col px-4 py-4">
       {/* Header */}
       <div className="mb-4 flex items-center justify-between">
         <button
@@ -139,6 +188,20 @@ export default function GameScreen({
           <span className="text-base font-bold text-[#2d5016] dark:text-green-300">
             ⛳ Hole {game.currentHole}/{game.holeCount}
           </span>
+        </div>
+      </div>
+
+      {/* Progress Bar */}
+      <div className="mb-4">
+        <div className="mb-2 flex items-center justify-between text-xs font-semibold text-gray-700 dark:text-gray-300">
+          <span>Progress</span>
+          <span>{game.currentHole - 1} / {game.holeCount} holes</span>
+        </div>
+        <div className="progress-bar">
+          <div 
+            className="progress-fill" 
+            style={{ width: `${progressPercentage}%` }}
+          />
         </div>
       </div>
 
@@ -162,13 +225,15 @@ export default function GameScreen({
           return (
             <div
               key={player.id}
-              className={`rounded-xl border-2 p-3 shadow-md backdrop-blur-sm ${
+              className={`rounded-xl border-2 p-3 shadow-md backdrop-blur-sm transition-all ${
                 points
                   ? playerPoints === Math.max(...(points || []))
-                    ? "border-yellow-400 bg-gradient-to-br from-yellow-50/90 to-amber-50/90 dark:from-yellow-900/30 dark:to-amber-900/20"
+                    ? "leader-glow border-yellow-400 bg-gradient-to-br from-yellow-50/90 to-amber-50/90 dark:from-yellow-900/30 dark:to-amber-900/20"
                     : "border-gray-300 bg-white/80 dark:border-gray-600 dark:bg-gray-800/80"
-                  : "border-gray-300 bg-white/80 dark:border-gray-600 dark:bg-gray-800/80"
-              }`}
+                  : leader?.id === player.id && player.totalPoints > 0
+                    ? "border-yellow-300 bg-gradient-to-br from-yellow-50/70 to-amber-50/70 dark:from-yellow-900/20 dark:to-amber-900/10"
+                    : "border-gray-300 bg-white/80 dark:border-gray-600 dark:bg-gray-800/80"
+              } ${showSuccessAnimation && points && playerPoints === Math.max(...(points || [])) ? "success-animation" : ""}`}
             >
               <div className="flex items-center justify-between gap-3">
                 <span className="text-base font-semibold text-gray-900 dark:text-white">
@@ -184,17 +249,19 @@ export default function GameScreen({
                     <span className="text-xs text-gray-500 dark:text-gray-400">Score:</span>
                     <div className="flex flex-col">
                       <input
+                        ref={(el) => (inputRefs.current[index] = el)}
                         type="number"
                         min="1"
                         max="20"
                         value={scores[index] || ""}
                         onChange={(e) => handleScoreChange(index, e.target.value)}
+                        onKeyDown={(e) => handleKeyDown(index, e)}
                         disabled={!!points}
-                        className={`w-16 rounded-lg border-2 px-2 py-1 text-center text-base font-bold shadow-sm focus:outline-none focus:ring-2 focus:ring-[#2d5016]/50 ${
+                        className={`w-16 rounded-lg border-2 px-2 py-1 text-center text-base font-bold shadow-sm transition-all focus:outline-none focus:ring-2 focus:ring-[#2d5016]/50 focus:ring-offset-1 ${
                           scoreErrors[index]
                             ? "border-red-500 bg-red-50 dark:border-red-600 dark:bg-red-900/20"
                             : "border-gray-300 bg-white/90 dark:border-gray-600 dark:bg-gray-700/90"
-                        } text-gray-900 focus:border-[#2d5016] disabled:bg-gray-100 disabled:text-gray-500 dark:text-white dark:focus:border-[#4a7c2a] dark:disabled:bg-gray-800`}
+                        } text-gray-900 focus:border-[#2d5016] focus:scale-105 disabled:bg-gray-100 disabled:text-gray-500 dark:text-white dark:focus:border-[#4a7c2a] dark:disabled:bg-gray-800`}
                       />
                       {scoreErrors[index] && (
                         <span className="mt-0.5 text-[10px] text-red-600 dark:text-red-400">
@@ -223,17 +290,17 @@ export default function GameScreen({
         <button
           onClick={handleCalculate}
           disabled={!hasScores}
-          className="mb-4 flex min-h-[52px] w-full flex-col items-center justify-center rounded-xl bg-gradient-to-r from-[#2d5016] to-[#3d6b1f] px-4 py-2.5 text-base font-bold text-white shadow-lg transition-all hover:from-[#3d6026] hover:to-[#4d7036] hover:shadow-xl disabled:from-gray-400 disabled:to-gray-500 disabled:shadow-none focus:outline-none focus:ring-4 focus:ring-[#2d5016]/50 dark:from-[#4a7c2a] dark:to-[#5a8c3a] dark:hover:from-[#5a8c3a] dark:hover:to-[#6a9c4a] dark:disabled:from-gray-600 dark:disabled:to-gray-700"
+          className={`mb-4 flex min-h-[52px] w-full flex-col items-center justify-center rounded-xl bg-gradient-to-r from-[#2d5016] to-[#3d6b1f] px-4 py-2.5 text-base font-bold text-white shadow-lg transition-all hover:from-[#3d6026] hover:to-[#4d7036] hover:shadow-xl hover:scale-[1.02] active:scale-[0.98] disabled:from-gray-400 disabled:to-gray-500 disabled:shadow-none disabled:hover:scale-100 focus:outline-none focus:ring-4 focus:ring-[#2d5016]/50 dark:from-[#4a7c2a] dark:to-[#5a8c3a] dark:hover:from-[#5a8c3a] dark:hover:to-[#6a9c4a] dark:disabled:from-gray-600 dark:disabled:to-gray-700 ${buttonPressed ? "button-press" : ""}`}
         >
           🏌️ CALCULATE POINTS 🏌️
           <div className="mt-1 text-xs font-normal opacity-90">
-            ⚡ Instant calculation
+            ⚡ Instant calculation • Press Enter
           </div>
         </button>
       ) : (
         <button
           onClick={handleNextHole}
-          className="mb-4 flex min-h-[52px] w-full items-center justify-center rounded-xl bg-gradient-to-r from-green-600 to-green-700 px-4 py-2.5 text-base font-bold text-white shadow-lg transition-all hover:from-green-700 hover:to-green-800 hover:shadow-xl focus:outline-none focus:ring-4 focus:ring-green-600/50"
+          className={`mb-4 flex min-h-[52px] w-full items-center justify-center rounded-xl bg-gradient-to-r from-green-600 to-green-700 px-4 py-2.5 text-base font-bold text-white shadow-lg transition-all hover:from-green-700 hover:to-green-800 hover:shadow-xl hover:scale-[1.02] active:scale-[0.98] focus:outline-none focus:ring-4 focus:ring-green-600/50 ${buttonPressed ? "button-press" : ""}`}
         >
           {game.currentHole < game.holeCount ? "⛳ NEXT HOLE ⛳" : "🏆 VIEW RESULTS 🏆"}
         </button>
@@ -245,19 +312,24 @@ export default function GameScreen({
           <span>📊</span>
           Running Totals
         </div>
-        <div className="space-y-1">
+        <div className="space-y-2">
           {game.players.map((player, index) => {
             const isLeader = leader?.id === player.id && player.totalPoints > 0;
             return (
               <div
                 key={player.id}
-                className={`flex items-center justify-between text-sm ${
-                  isLeader ? "font-semibold text-yellow-600 dark:text-yellow-400" : "text-gray-600 dark:text-gray-400"
+                className={`flex items-center justify-between rounded-lg px-3 py-2 text-sm transition-all ${
+                  isLeader 
+                    ? "leader-glow bg-gradient-to-r from-yellow-50/90 to-amber-50/90 font-bold text-yellow-700 dark:from-yellow-900/40 dark:to-amber-900/20 dark:text-yellow-300" 
+                    : "text-gray-600 dark:text-gray-400"
                 }`}
               >
-                <span>
-                  {isLeader && "🥇 "}
-                  {player.name}: {player.totalPoints} pts
+                <span className="flex items-center gap-2">
+                  {isLeader && <span className="text-lg">👑</span>}
+                  <span>{player.name}:</span>
+                </span>
+                <span className={`font-semibold ${isLeader ? "text-lg" : ""}`}>
+                  {player.totalPoints} pts
                 </span>
               </div>
             );

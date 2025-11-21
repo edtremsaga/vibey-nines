@@ -79,3 +79,48 @@ export function getSortedPlayers(players: Player[]): Player[] {
   return [...players].sort((a, b) => b.totalPoints - a.totalPoints);
 }
 
+export function editHoleScores(
+  game: Game,
+  holeNumber: number,
+  newScores: number[]
+): Game {
+  if (game.isComplete) return game;
+  if (holeNumber < 1 || holeNumber >= game.currentHole) return game;
+
+  // Validate scores
+  if (newScores.length !== game.playerCount) {
+    throw new Error("Number of scores must match player count");
+  }
+
+  // Calculate points for the edited hole
+  const { calculatePoints } = require("./scoring");
+  const newPoints = calculatePoints(newScores, game.playerCount);
+
+  const holeIndex = holeNumber - 1;
+
+  // Update players - replace the hole's scores and recalculate totals
+  const updatedPlayers = game.players.map((player, playerIndex) => {
+    // Replace scores and points for this hole
+    const updatedScores = [...player.scores];
+    const updatedPoints = [...player.points];
+    
+    updatedScores[holeIndex] = newScores[playerIndex];
+    updatedPoints[holeIndex] = newPoints[playerIndex];
+
+    // Recalculate total points
+    const totalPoints = updatedPoints.reduce((sum, p) => sum + p, 0);
+
+    return {
+      ...player,
+      scores: updatedScores,
+      points: updatedPoints,
+      totalPoints,
+    };
+  });
+
+  return {
+    ...game,
+    players: updatedPlayers,
+  };
+}
+

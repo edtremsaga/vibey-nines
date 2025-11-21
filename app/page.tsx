@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { Game, GameState, PlayerCount, HoleCount } from "@/types/game";
-import { createGame } from "@/lib/game-utils";
+import { createGame, editHoleScores } from "@/lib/game-utils";
 import { loadGame, saveGame } from "@/lib/storage";
 import SetupScreen from "@/components/SetupScreen";
 import GameScreen from "@/components/GameScreen";
@@ -38,8 +38,21 @@ export default function Home() {
 
   const handleGameUpdate = (updatedGame: Game) => {
     setGame(updatedGame);
+    saveGame(updatedGame);
     if (updatedGame.isComplete) {
       setView("results");
+    }
+  };
+
+  const handleEditHole = (holeNumber: number, scores: number[]) => {
+    if (!game) return;
+    try {
+      const updatedGame = editHoleScores(game, holeNumber, scores);
+      setGame(updatedGame);
+      saveGame(updatedGame);
+    } catch (error) {
+      console.error("Error editing hole:", error);
+      alert("Failed to edit hole. Please try again.");
     }
   };
 
@@ -81,6 +94,7 @@ export default function Home() {
         game={game}
         onBack={() => setView("game")}
         onReturnToGame={() => setView("game")}
+        onEditHole={handleEditHole}
       />
     );
   }

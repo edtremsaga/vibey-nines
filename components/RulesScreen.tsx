@@ -6,7 +6,7 @@ interface RulesScreenProps {
 
 export default function RulesScreen({ onBack }: RulesScreenProps) {
   return (
-    <div className="golf-course-bg flex min-h-screen flex-col px-4 py-4">
+    <div className="golf-course-bg screen-enter flex min-h-screen flex-col px-4 py-4">
       {/* Header */}
       <div className="mb-6 flex items-center justify-between">
         <button
