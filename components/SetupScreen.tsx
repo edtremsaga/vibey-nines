@@ -57,7 +57,7 @@ export default function SetupScreen({ onStartGame, onViewRules }: SetupScreenPro
             <span className="text-4xl">🏌️</span>
           </div>
           <p className="mt-2 text-lg font-medium text-gray-700 dark:text-gray-200">
-            Golf Wagering Game{" "}
+            A Golf Wagering Game{" "}
             <span className="italic text-gray-600 dark:text-gray-300">by Vibey Craft</span>
           </p>
           
