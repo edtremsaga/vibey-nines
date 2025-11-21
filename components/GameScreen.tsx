@@ -249,7 +249,9 @@ export default function GameScreen({
                     <span className="text-xs text-gray-500 dark:text-gray-400">Score:</span>
                     <div className="flex flex-col">
                       <input
-                        ref={(el) => (inputRefs.current[index] = el)}
+                        ref={(el) => {
+                          inputRefs.current[index] = el;
+                        }}
                         type="number"
                         min="1"
                         max="20"
