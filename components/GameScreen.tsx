@@ -36,6 +36,9 @@ export default function GameScreen({
   const [showSuccessAnimation, setShowSuccessAnimation] = useState(false);
   const [buttonPressed, setButtonPressed] = useState(false);
   const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
+  const [parInputValue, setParInputValue] = useState<string>(
+    String(game.pars[game.currentHole - 1] || 4)
+  );
 
   // Auto-focus first input when entering new hole
   useEffect(() => {
@@ -45,7 +48,9 @@ export default function GameScreen({
         inputRefs.current[0]?.focus();
       }, 100);
     }
-  }, [points, game.currentHole]);
+    // Update par input value when hole changes
+    setParInputValue(String(game.pars[game.currentHole - 1] || 4));
+  }, [points, game.currentHole, game.pars]);
 
   useEffect(() => {
     setIsOffline(!navigator.onLine);
@@ -257,14 +262,56 @@ export default function GameScreen({
           <div className="mt-2 flex items-center justify-center gap-2">
             <label className="text-sm font-semibold text-gray-600 dark:text-gray-400">Par:</label>
             <input
-              type="number"
-              min="3"
-              max="5"
-              value={game.pars[game.currentHole - 1] || 4}
+              type="text"
+              inputMode="numeric"
+              maxLength={1}
+              value={parInputValue}
               onChange={(e) => {
-                const parValue = parseInt(e.target.value);
-                if (!isNaN(parValue) && parValue >= 3 && parValue <= 5) {
-                  onUpdatePar(game.currentHole, parValue);
+                const value = e.target.value;
+                // Remove any non-numeric characters
+                const cleanedValue = value.replace(/[^0-9]/g, '');
+                
+                // Allow empty, 3, 4, or 5
+                if (cleanedValue === "" || cleanedValue === "3" || cleanedValue === "4" || cleanedValue === "5") {
+                  setParInputValue(cleanedValue);
+                  // If it's a valid digit, update the game state
+                  if (cleanedValue !== "" && /^[345]$/.test(cleanedValue)) {
+                    const parValue = parseInt(cleanedValue);
+                    if (!isNaN(parValue)) {
+                      onUpdatePar(game.currentHole, parValue);
+                    }
+                  }
+                }
+                // Otherwise, ignore the invalid input (don't update state)
+              }}
+              onKeyDown={(e) => {
+                // Allow all normal editing keys and numbers
+                if (
+                  e.key === 'Backspace' ||
+                  e.key === 'Delete' ||
+                  e.key === 'Tab' ||
+                  e.key === 'Enter' ||
+                  e.key === 'ArrowLeft' ||
+                  e.key === 'ArrowRight' ||
+                  e.key === 'ArrowUp' ||
+                  e.key === 'ArrowDown' ||
+                  (e.key === 'a' && (e.ctrlKey || e.metaKey)) ||
+                  (e.key === 'c' && (e.ctrlKey || e.metaKey)) ||
+                  (e.key === 'v' && (e.ctrlKey || e.metaKey)) ||
+                  (e.key === 'x' && (e.ctrlKey || e.metaKey)) ||
+                  /^[0-9]$/.test(e.key)
+                ) {
+                  return; // Allow these keys
+                }
+                // Block other characters
+                e.preventDefault();
+              }}
+              onBlur={(e) => {
+                // Ensure valid value on blur - if empty or invalid, restore current par
+                const value = parInputValue;
+                if (value === "" || !/^[345]$/.test(value)) {
+                  const currentPar = String(game.pars[game.currentHole - 1] || 4);
+                  setParInputValue(currentPar);
                 }
               }}
               className="w-14 rounded-lg border-2 border-[#2d5016]/30 bg-white/90 px-2 py-1 text-center text-sm font-bold text-[#2d5016] shadow-sm focus:border-[#2d5016] focus:outline-none focus:ring-2 focus:ring-[#2d5016]/50 dark:border-[#4a7c2a]/50 dark:bg-gray-700/90 dark:text-green-300 dark:focus:border-[#4a7c2a]"
