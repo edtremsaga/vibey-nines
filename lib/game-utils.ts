@@ -3,11 +3,14 @@ import { Game, Player, PlayerCount, HoleCount } from "@/types/game";
 export function createGame(
   playerCount: PlayerCount,
   holeCount: HoleCount,
-  playerNames: string[]
+  playerNames: string[],
+  handicaps: (number | undefined)[],
+  pars: number[]
 ): Game {
   const players: Player[] = Array.from({ length: playerCount }, (_, i) => ({
     id: `player-${i + 1}`,
     name: playerNames[i] || `Player ${i + 1}`,
+    handicap: handicaps[i],
     scores: [],
     points: [],
     totalPoints: 0,
@@ -17,6 +20,7 @@ export function createGame(
     id: `game-${Date.now()}`,
     playerCount,
     holeCount,
+    pars, // Store par values for each hole
     players,
     currentHole: 1,
     isComplete: false,

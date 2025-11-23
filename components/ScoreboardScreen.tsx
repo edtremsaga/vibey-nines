@@ -4,6 +4,7 @@ import { useState } from "react";
 import { Game } from "@/types/game";
 import { getSortedPlayers, getLeader } from "@/lib/game-utils";
 import { calculatePoints } from "@/lib/scoring";
+import { calculateTotalNetScore, calculateNetScore } from "@/lib/handicap-utils";
 
 interface ScoreboardScreenProps {
   game: Game;
@@ -97,6 +98,11 @@ export default function ScoreboardScreen({
       <div className="mb-6 text-center">
         <div className="inline-block rounded-xl bg-white/80 px-6 py-3 text-lg font-bold text-[#2d5016] shadow-lg dark:bg-gray-800/80 dark:text-green-300">
           ⛳ Hole {game.currentHole} of {game.holeCount}
+          {game.pars.length > 0 && (
+            <span className="ml-2 text-sm font-normal text-gray-600 dark:text-gray-400">
+              (Total Par: {game.pars.reduce((sum, par) => sum + par, 0)})
+            </span>
+          )}
         </div>
       </div>
 
@@ -117,16 +123,30 @@ export default function ScoreboardScreen({
             >
               <div className="mb-3 flex items-center justify-between">
                 <div className="flex-1">
-                  <span className="font-semibold text-gray-900 dark:text-white">
-                    {medal} {player.name}
-                  </span>
+                  <div className="flex items-center gap-2">
+                    <span className="font-semibold text-gray-900 dark:text-white">
+                      {medal} {player.name}
+                    </span>
+                    {player.handicap !== undefined && (
+                      <span className="text-xs text-gray-500 dark:text-gray-400">
+                        (HCP: {player.handicap})
+                      </span>
+                    )}
+                  </div>
                   <div className="mt-1 text-xs text-gray-500 dark:text-gray-400">
                     Avg: {getAveragePoints(player).toFixed(1)} pts/hole
                   </div>
                 </div>
-                <span className="text-lg font-bold text-gray-900 dark:text-white">
-                  {player.totalPoints} pts
-                </span>
+                <div className="flex flex-col items-end">
+                  <span className="text-lg font-bold text-gray-900 dark:text-white">
+                    {player.totalPoints} pts
+                  </span>
+                  {player.handicap !== undefined && player.scores.length > 0 && (
+                    <span className="text-xs text-gray-500 dark:text-gray-400">
+                      Net: {calculateTotalNetScore(player.scores, player.handicap, game.holeCount) ?? "—"}
+                    </span>
+                  )}
+                </div>
               </div>
               
               {/* Mini Bar Chart */}
@@ -177,9 +197,9 @@ export default function ScoreboardScreen({
                           ? "bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300"
                           : "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300"
                       }`}
-                      title={isEditable ? `Edit Hole ${holeNumber}` : `Hole ${holeNumber}: ${points} pts`}
+                      title={isEditable ? `Edit Hole ${holeNumber} (Par ${game.pars[holeIndex] || 4})` : `Hole ${holeNumber} (Par ${game.pars[holeIndex] || 4}): ${points} pts`}
                     >
-                      H{holeNumber}: {points}
+                      H{holeNumber} (Par {game.pars[holeIndex] || 4}): {points}
                       {isBeingEdited && " ✏️"}
                     </button>
                   );
@@ -196,6 +216,11 @@ export default function ScoreboardScreen({
           <div className="mx-4 w-full max-w-md rounded-2xl bg-white p-6 shadow-2xl dark:bg-gray-800">
             <h3 className="mb-4 text-xl font-bold text-gray-900 dark:text-white">
               Edit Hole {editingHole}
+              {game.pars[editingHole - 1] && (
+                <span className="ml-2 text-base font-normal text-gray-600 dark:text-gray-400">
+                  (Par {game.pars[editingHole - 1]})
+                </span>
+              )}
             </h3>
             <p className="mb-4 text-sm text-gray-600 dark:text-gray-400">
               Update scores for all players. This will recalculate points for this hole.

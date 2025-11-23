@@ -4,11 +4,13 @@ import { useState, useEffect, useRef } from "react";
 import { Game } from "@/types/game";
 import { calculatePoints, getTieInfo } from "@/lib/scoring";
 import { addHoleScores, getLeader } from "@/lib/game-utils";
+import { calculateNetScore, calculateTotalNetScore } from "@/lib/handicap-utils";
 import { saveGame } from "@/lib/storage";
 
 interface GameScreenProps {
   game: Game;
   onGameUpdate: (game: Game) => void;
+  onUpdatePar: (holeNumber: number, par: number) => void;
   onViewScoreboard: () => void;
   onBack: () => void;
 }
@@ -16,6 +18,7 @@ interface GameScreenProps {
 export default function GameScreen({
   game,
   onGameUpdate,
+  onUpdatePar,
   onViewScoreboard,
   onBack,
 }: GameScreenProps) {
@@ -74,7 +77,15 @@ export default function GameScreen({
       return;
     }
     
-    const numValue = parseInt(value);
+    // Only allow numeric characters - remove any non-numeric characters
+    const cleanedValue = value.replace(/[^0-9]/g, '');
+    
+    // If value was cleaned (had non-numeric chars), don't update with invalid chars
+    if (cleanedValue !== value) {
+      return;
+    }
+    
+    const numValue = parseInt(cleanedValue);
     // Only allow values from 1 to 20
     if (!isNaN(numValue) && numValue >= 1 && numValue <= 20) {
       const newScores = [...scores];
@@ -109,7 +120,38 @@ export default function GameScreen({
     }
   };
 
+  const handleScoreKeyDown = (e: React.KeyboardEvent<HTMLInputElement>, index: number) => {
+    // Allow: backspace, delete, tab, escape, enter
+    // Allow: Ctrl/Cmd + A, C, V, X (for copy/paste)
+    // Allow: Arrow keys for navigation
+    if (
+      e.key === 'Backspace' ||
+      e.key === 'Delete' ||
+      e.key === 'Tab' ||
+      e.key === 'Escape' ||
+      e.key === 'Enter' ||
+      e.key === 'ArrowLeft' ||
+      e.key === 'ArrowRight' ||
+      e.key === 'ArrowUp' ||
+      e.key === 'ArrowDown' ||
+      (e.key === 'a' && (e.ctrlKey || e.metaKey)) ||
+      (e.key === 'c' && (e.ctrlKey || e.metaKey)) ||
+      (e.key === 'v' && (e.ctrlKey || e.metaKey)) ||
+      (e.key === 'x' && (e.ctrlKey || e.metaKey))
+    ) {
+      return; // Allow these keys
+    }
+    
+    // Block any non-numeric characters (only allow 0-9)
+    if (!/[0-9]/.test(e.key)) {
+      e.preventDefault();
+    }
+  };
+
   const handleKeyDown = (index: number, e: React.KeyboardEvent<HTMLInputElement>) => {
+    // First check if it's a non-numeric character and block it
+    handleScoreKeyDown(e, index);
+    
     // Enter key to calculate if all scores entered
     if (e.key === "Enter" && hasScores) {
       handleCalculate();
@@ -212,7 +254,22 @@ export default function GameScreen({
             <span>⛳</span>
             <span>HOLE {game.currentHole}</span>
           </div>
-          <div className="mt-2 text-sm font-semibold text-gray-600 dark:text-gray-400">Par: 4</div>
+          <div className="mt-2 flex items-center justify-center gap-2">
+            <label className="text-sm font-semibold text-gray-600 dark:text-gray-400">Par:</label>
+            <input
+              type="number"
+              min="3"
+              max="5"
+              value={game.pars[game.currentHole - 1] || 4}
+              onChange={(e) => {
+                const parValue = parseInt(e.target.value);
+                if (!isNaN(parValue) && parValue >= 3 && parValue <= 5) {
+                  onUpdatePar(game.currentHole, parValue);
+                }
+              }}
+              className="w-14 rounded-lg border-2 border-[#2d5016]/30 bg-white/90 px-2 py-1 text-center text-sm font-bold text-[#2d5016] shadow-sm focus:border-[#2d5016] focus:outline-none focus:ring-2 focus:ring-[#2d5016]/50 dark:border-[#4a7c2a]/50 dark:bg-gray-700/90 dark:text-green-300 dark:focus:border-[#4a7c2a]"
+            />
+          </div>
         </div>
       </div>
 
@@ -236,14 +293,28 @@ export default function GameScreen({
               } ${showSuccessAnimation && points && playerPoints === Math.max(...(points || [])) ? "success-animation" : ""}`}
             >
               <div className="flex items-center justify-between gap-3">
-                <span className="text-base font-semibold text-gray-900 dark:text-white">
-                  {player.name}
-                </span>
-                {points ? (
-                  <span className="text-base font-bold text-gray-900 dark:text-white">
-                    {tie?.isTied && "⚖️ "}
-                    {playerPoints} {playerPoints === 1 ? "pt" : "pts"}
+                <div className="flex flex-col">
+                  <span className="text-base font-semibold text-gray-900 dark:text-white">
+                    {player.name}
                   </span>
+                  {player.handicap !== undefined && (
+                    <span className="text-xs text-gray-500 dark:text-gray-400">
+                      HCP: {player.handicap}
+                    </span>
+                  )}
+                </div>
+                {points ? (
+                  <div className="flex flex-col items-end gap-0.5">
+                    <span className="text-base font-bold text-gray-900 dark:text-white">
+                      {tie?.isTied && "⚖️ "}
+                      {playerPoints} {playerPoints === 1 ? "pt" : "pts"}
+                    </span>
+                    {player.handicap !== undefined && scores[index] > 0 && (
+                      <span className="text-xs text-gray-500 dark:text-gray-400">
+                        Net: {calculateNetScore(scores[index], player.handicap, game.holeCount) ?? "—"}
+                      </span>
+                    )}
+                  </div>
                 ) : (
                   <div className="flex items-center gap-2">
                     <span className="text-xs text-gray-500 dark:text-gray-400">Score:</span>
@@ -328,11 +399,25 @@ export default function GameScreen({
               >
                 <span className="flex items-center gap-2">
                   {isLeader && <span className="text-lg">👑</span>}
-                  <span>{player.name}:</span>
+                  <div className="flex flex-col">
+                    <span>{player.name}</span>
+                    {player.handicap !== undefined && (
+                      <span className="text-xs text-gray-500 dark:text-gray-400">
+                        HCP: {player.handicap}
+                      </span>
+                    )}
+                  </div>
                 </span>
-                <span className={`font-semibold ${isLeader ? "text-lg" : ""}`}>
-                  {player.totalPoints} pts
-                </span>
+                <div className="flex flex-col items-end">
+                  <span className={`font-semibold ${isLeader ? "text-lg" : ""}`}>
+                    {player.totalPoints} pts
+                  </span>
+                  {player.handicap !== undefined && player.scores.length > 0 && (
+                    <span className="text-xs text-gray-500 dark:text-gray-400">
+                      Net: {calculateTotalNetScore(player.scores, player.handicap, game.holeCount) ?? "—"}
+                    </span>
+                  )}
+                </div>
               </div>
             );
           })}

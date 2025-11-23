@@ -28,9 +28,11 @@ export default function Home() {
   const handleStartGame = (
     playerCount: PlayerCount,
     holeCount: HoleCount,
-    playerNames: string[]
+    playerNames: string[],
+    handicaps: (number | undefined)[],
+    pars: number[]
   ) => {
-    const newGame = createGame(playerCount, holeCount, playerNames);
+    const newGame = createGame(playerCount, holeCount, playerNames, handicaps, pars);
     setGame(newGame);
     saveGame(newGame);
     setView("game");
@@ -54,6 +56,15 @@ export default function Home() {
       console.error("Error editing hole:", error);
       alert("Failed to edit hole. Please try again.");
     }
+  };
+
+  const handleUpdatePar = (holeNumber: number, par: number) => {
+    if (!game) return;
+    const updatedPars = [...game.pars];
+    updatedPars[holeNumber - 1] = par;
+    const updatedGame = { ...game, pars: updatedPars };
+    setGame(updatedGame);
+    saveGame(updatedGame);
   };
 
   const handleNewGame = () => {
@@ -103,6 +114,7 @@ export default function Home() {
     <GameScreen
       game={game}
       onGameUpdate={handleGameUpdate}
+      onUpdatePar={handleUpdatePar}
       onViewScoreboard={() => setView("scoreboard")}
       onBack={() => setView("setup")}
     />

@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef } from "react";
 import { Game } from "@/types/game";
 import { getSortedPlayers } from "@/lib/game-utils";
+import { calculateTotalNetScore } from "@/lib/handicap-utils";
 import { clearGame } from "@/lib/storage";
 
 interface ResultsScreenProps {
@@ -157,12 +158,28 @@ export default function ResultsScreen({ game, onNewGame }: ResultsScreenProps) {
                   }`}
                 >
                   <div className="flex items-center justify-between">
-                    <span className="font-semibold text-gray-900 dark:text-white">
-                      {medal} {player.name}
-                    </span>
-                    <span className="text-lg font-bold text-gray-900 dark:text-white">
-                      {player.totalPoints} pts
-                    </span>
+                    <div className="flex flex-col">
+                      <div className="flex items-center gap-2">
+                        <span className="font-semibold text-gray-900 dark:text-white">
+                          {medal} {player.name}
+                        </span>
+                        {player.handicap !== undefined && (
+                          <span className="text-xs text-gray-500 dark:text-gray-400">
+                            (HCP: {player.handicap})
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                    <div className="flex flex-col items-end">
+                      <span className="text-lg font-bold text-gray-900 dark:text-white">
+                        {player.totalPoints} pts
+                      </span>
+                      {player.handicap !== undefined && player.scores.length > 0 && (
+                        <span className="text-xs text-gray-500 dark:text-gray-400">
+                          Net: {calculateTotalNetScore(player.scores, player.handicap, game.holeCount) ?? "—"}
+                        </span>
+                      )}
+                    </div>
                   </div>
                 </div>
               );

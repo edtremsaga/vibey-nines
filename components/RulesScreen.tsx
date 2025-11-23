@@ -62,6 +62,36 @@ export default function RulesScreen({ onBack }: RulesScreenProps) {
           </p>
         </div>
 
+        {/* Handicaps */}
+        <div className="rounded-2xl border-2 border-gray-300 bg-white/80 backdrop-blur-sm p-6 shadow-xl dark:border-gray-600 dark:bg-gray-800/80">
+          <h3 className="mb-3 font-semibold text-gray-900 dark:text-white">🏌️ Handicaps & Net Scores</h3>
+          <div className="space-y-3 text-sm text-gray-600 dark:text-gray-400">
+            <p>
+              <strong className="text-gray-900 dark:text-white">Handicaps are optional</strong> and allow players of different skill levels to compete fairly.
+            </p>
+            <div>
+              <div className="font-semibold text-gray-900 dark:text-white mb-1">How Net Scores Work:</div>
+              <ul className="ml-4 mt-1 list-disc space-y-1">
+                <li>Net Score = Gross Score - (Handicap ÷ Number of Holes)</li>
+                <li>Example: If your handicap is 18 and you play 18 holes, you subtract 1 stroke per hole</li>
+                <li>Example: If your handicap is 9 and you play 18 holes, you subtract 0.5 strokes per hole (rounded)</li>
+                <li>Total Net Score = Sum of all gross scores - full handicap</li>
+              </ul>
+            </div>
+            <div>
+              <div className="font-semibold text-gray-900 dark:text-white mb-1">Handicap Range:</div>
+              <ul className="ml-4 mt-1 list-disc space-y-1">
+                <li>Range: -54 to 54</li>
+                <li>Negative handicaps are for skilled players (scratch or better)</li>
+                <li>Positive handicaps represent strokes over par</li>
+              </ul>
+            </div>
+            <p className="text-xs italic text-gray-500 dark:text-gray-500">
+              Note: Nines points are calculated using gross scores. Net scores are shown for reference and handicap-adjusted comparisons.
+            </p>
+          </div>
+        </div>
+
         {/* Tips */}
         <div className="rounded-2xl border-2 border-gray-300 bg-white/80 backdrop-blur-sm p-6 shadow-xl dark:border-gray-600 dark:bg-gray-800/80">
           <h3 className="mb-3 font-semibold text-gray-900 dark:text-white">Tips</h3>
