@@ -98,7 +98,7 @@ export default function RulesScreen({ onBack }: RulesScreenProps) {
           <ul className="ml-4 list-disc space-y-1 text-sm text-gray-600 dark:text-gray-400">
             <li>Every hole is worth 9 pts</li>
             <li>Fresh start each hole</li>
-            <li>Perfect for betting</li>
+            <li>Perfect for wagering</li>
           </ul>
         </div>
       </div>
