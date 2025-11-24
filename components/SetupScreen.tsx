@@ -243,7 +243,7 @@ export default function SetupScreen({ onStartGame, onViewRules }: SetupScreenPro
           <div className="space-y-3">
             {Array.from({ length: playerCount }).map((_, index) => (
               <div key={index} className="space-y-2">
-                <div className="flex items-stretch gap-2">
+                <div className="flex items-stretch gap-2 w-full">
                   <input
                     type="text"
                     value={playerNames[index]}
@@ -276,7 +276,7 @@ export default function SetupScreen({ onStartGame, onViewRules }: SetupScreenPro
                       }
                     }}
                     placeholder="HCP"
-                    className={`w-24 rounded-xl border-2 px-3 py-3 text-base leading-normal min-h-[48px] shadow-sm focus:outline-none focus:ring-2 focus:ring-[#2d5016]/50 ${
+                    className={`flex-shrink-0 w-28 rounded-xl border-2 px-3 py-3 text-base leading-normal min-h-[48px] shadow-sm focus:outline-none focus:ring-2 focus:ring-[#2d5016]/50 ${
                       handicapErrors[index]
                         ? "border-red-500 bg-red-50 dark:border-red-600 dark:bg-red-900/20"
                         : "border-gray-300 bg-white/90 dark:border-gray-600 dark:bg-gray-700/90"
