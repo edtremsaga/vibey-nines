@@ -23,6 +23,9 @@ export default function SetupScreen({ onStartGame, onViewRules }: SetupScreenPro
   const [handicaps, setHandicaps] = useState<(number | undefined)[]>(() =>
     Array.from({ length: 4 }, () => undefined)
   );
+  const [handicapInputValues, setHandicapInputValues] = useState<string[]>(() =>
+    Array.from({ length: 4 }, () => "")
+  );
   const [nameError, setNameError] = useState(false);
   const [handicapErrors, setHandicapErrors] = useState<boolean[]>(() =>
     Array.from({ length: 4 }, () => false)
@@ -41,44 +44,68 @@ export default function SetupScreen({ onStartGame, onViewRules }: SetupScreenPro
   const handleHandicapChange = (index: number, value: string) => {
     const newHandicaps = [...handicaps];
     const newErrors = [...handicapErrors];
+    const newInputValues = [...handicapInputValues];
     
     // Allow empty string (optional handicap)
-    if (value === "" || value === "-") {
+    if (value === "") {
       newHandicaps[index] = undefined;
+      newInputValues[index] = "";
       newErrors[index] = false;
       setHandicaps(newHandicaps);
+      setHandicapInputValues(newInputValues);
       setHandicapErrors(newErrors);
       return;
     }
     
     // Only allow numeric characters, decimal point, and minus sign
     // Remove any non-numeric characters (except decimal and minus)
-    const cleanedValue = value.replace(/[^0-9.-]/g, '');
+    let cleanedValue = value.replace(/[^0-9.-]/g, '');
     
-    // If value was cleaned (had non-numeric chars), don't update
-    if (cleanedValue !== value) {
-      return;
+    // Prevent multiple decimal points
+    const parts = cleanedValue.split('.');
+    if (parts.length > 2) {
+      cleanedValue = parts[0] + '.' + parts.slice(1).join('');
     }
     
+    // Prevent minus sign in wrong position (must be at start)
+    if (cleanedValue.includes('-') && cleanedValue.indexOf('-') !== 0) {
+      cleanedValue = cleanedValue.replace(/-/g, '');
+      if (cleanedValue && !cleanedValue.startsWith('-')) {
+        cleanedValue = '-' + cleanedValue;
+      }
+    }
+    
+    // Update input value for display
+    newInputValues[index] = cleanedValue;
+    
+    // Allow partial decimal values during typing (e.g., "5.", "12.", "-")
+    const isValidPartial = cleanedValue === "-" || cleanedValue.endsWith('.');
     const numValue = parseFloat(cleanedValue);
     
-    // Validate range: -54 to 54
-    if (isNaN(numValue)) {
+    if (!isValidPartial && !isNaN(numValue)) {
+      // Complete number - validate range
+      if (numValue < -54 || numValue > 54) {
+        newErrors[index] = true;
+        setHandicapErrors(newErrors);
+        setHandicapInputValues(newInputValues);
+        return;
+      }
+      
+      // Valid handicap - store as number
+      newHandicaps[index] = numValue;
+      newErrors[index] = false;
+    } else if (cleanedValue === "-" || cleanedValue.endsWith('.')) {
+      // Partial value - allow it temporarily, don't store as number
+      newErrors[index] = false;
+    } else if (cleanedValue !== "" && isNaN(numValue)) {
+      // Invalid - reset to empty or keep showing error
       newErrors[index] = true;
-      setHandicapErrors(newErrors);
-      return;
+    } else {
+      newErrors[index] = false;
     }
     
-    if (numValue < -54 || numValue > 54) {
-      newErrors[index] = true;
-      setHandicapErrors(newErrors);
-      return;
-    }
-    
-    // Valid handicap
-    newHandicaps[index] = numValue;
-    newErrors[index] = false;
     setHandicaps(newHandicaps);
+    setHandicapInputValues(newInputValues);
     setHandicapErrors(newErrors);
   };
 
@@ -140,8 +167,8 @@ export default function SetupScreen({ onStartGame, onViewRules }: SetupScreenPro
   };
 
   return (
-    <div className="golf-course-bg screen-enter flex min-h-screen flex-col items-center justify-center px-4 py-8">
-      <div className="w-full max-w-md space-y-5">
+    <div className="golf-course-bg screen-enter flex min-h-screen flex-col items-center px-4 py-4 overflow-y-auto" style={{ paddingBottom: 'max(2rem, env(safe-area-inset-bottom, 2rem))' }}>
+      <div className="w-full max-w-md space-y-5 my-auto py-4">
         {/* Header */}
         <div className="text-center">
           <div className="mb-4 flex items-center justify-center gap-3">
@@ -179,6 +206,7 @@ export default function SetupScreen({ onStartGame, onViewRules }: SetupScreenPro
                 setPlayerCount(3);
                 setNameError(false);
                 setHandicapErrors(Array.from({ length: 4 }, () => false));
+                setHandicapInputValues(Array.from({ length: 4 }, () => ""));
               }}
               className={`relative flex min-h-[52px] items-center justify-center rounded-xl border-2 px-4 py-2.5 text-base font-bold transition-all hover:scale-[1.02] active:scale-[0.98] ${
                 playerCount === 3
@@ -193,6 +221,7 @@ export default function SetupScreen({ onStartGame, onViewRules }: SetupScreenPro
                 setPlayerCount(4);
                 setNameError(false);
                 setHandicapErrors(Array.from({ length: 4 }, () => false));
+                setHandicapInputValues(Array.from({ length: 4 }, () => ""));
               }}
               className={`relative flex min-h-[52px] items-center justify-center rounded-xl border-2 px-4 py-2.5 text-base font-bold transition-all hover:scale-[1.02] active:scale-[0.98] ${
                 playerCount === 4
@@ -214,28 +243,40 @@ export default function SetupScreen({ onStartGame, onViewRules }: SetupScreenPro
           <div className="space-y-3">
             {Array.from({ length: playerCount }).map((_, index) => (
               <div key={index} className="space-y-2">
-                <div className="flex gap-2">
+                <div className="flex items-stretch gap-2">
                   <input
                     type="text"
                     value={playerNames[index]}
                     onChange={(e) => handlePlayerNameChange(index, e.target.value)}
                     placeholder={`Player ${index + 1}`}
-                    className={`flex-1 rounded-xl border-2 px-4 py-3 text-base shadow-sm focus:outline-none focus:ring-2 focus:ring-[#2d5016]/50 ${
+                    className={`flex-1 rounded-xl border-2 px-4 py-3 text-base leading-normal min-h-[48px] shadow-sm focus:outline-none focus:ring-2 focus:ring-[#2d5016]/50 ${
                       nameError
                         ? "border-red-500 bg-red-50 dark:border-red-600 dark:bg-red-900/20"
                         : "border-gray-300 bg-white/90 dark:border-gray-600 dark:bg-gray-700/90"
                     } text-gray-900 placeholder:text-gray-500 focus:border-[#2d5016] dark:text-white dark:placeholder:text-gray-400 dark:focus:border-[#4a7c2a]`}
                   />
                   <input
-                    type="number"
-                    step="0.1"
-                    value={handicaps[index] ?? ""}
+                    type="text"
+                    inputMode="decimal"
+                    value={handicapInputValues[index] || (handicaps[index] !== undefined ? String(handicaps[index]) : "")}
                     onChange={(e) => handleHandicapChange(index, e.target.value)}
                     onKeyDown={(e) => handleHandicapKeyDown(e, index)}
+                    onBlur={(e) => {
+                      // On blur, if input is empty or invalid, clear it
+                      const value = handicapInputValues[index];
+                      if (value === "" || value === "-" || value === ".") {
+                        const newInputValues = [...handicapInputValues];
+                        newInputValues[index] = "";
+                        setHandicapInputValues(newInputValues);
+                        setHandicaps((prev) => {
+                          const updated = [...prev];
+                          updated[index] = undefined;
+                          return updated;
+                        });
+                      }
+                    }}
                     placeholder="HCP"
-                    min="-54"
-                    max="54"
-                    className={`w-24 rounded-xl border-2 px-3 py-3 text-base shadow-sm focus:outline-none focus:ring-2 focus:ring-[#2d5016]/50 ${
+                    className={`w-24 rounded-xl border-2 px-3 py-3 text-base leading-normal min-h-[48px] shadow-sm focus:outline-none focus:ring-2 focus:ring-[#2d5016]/50 ${
                       handicapErrors[index]
                         ? "border-red-500 bg-red-50 dark:border-red-600 dark:bg-red-900/20"
                         : "border-gray-300 bg-white/90 dark:border-gray-600 dark:bg-gray-700/90"
@@ -296,10 +337,10 @@ export default function SetupScreen({ onStartGame, onViewRules }: SetupScreenPro
         </button>
 
         {/* Help Link */}
-        <div className="text-center">
+        <div className="text-center pt-4 pb-2">
           <button 
             onClick={onViewRules}
-            className="text-sm text-gray-600 underline hover:text-gray-900 dark:text-gray-400 dark:hover:text-white"
+            className="min-h-[44px] px-4 py-2 text-sm font-medium text-gray-700 underline hover:text-gray-900 dark:text-gray-300 dark:hover:text-white active:opacity-70"
           >
             Help / Rules
           </button>
