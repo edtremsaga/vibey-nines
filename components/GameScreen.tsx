@@ -418,7 +418,7 @@ export default function GameScreen({
       {/* Calculate/Next Button */}
       {!points ? (
         <button
-          onClick={handleCalculate}
+          onClick={() => handleCalculate()}
           disabled={!hasScores}
           className={`mb-4 flex min-h-[52px] w-full flex-col items-center justify-center rounded-xl bg-gradient-to-r from-[#2d5016] to-[#3d6b1f] px-4 py-2.5 text-base font-bold text-white shadow-lg transition-all hover:from-[#3d6026] hover:to-[#4d7036] hover:shadow-xl hover:scale-[1.02] active:scale-[0.98] disabled:from-gray-400 disabled:to-gray-500 disabled:shadow-none disabled:hover:scale-100 focus:outline-none focus:ring-4 focus:ring-[#2d5016]/50 dark:from-[#4a7c2a] dark:to-[#5a8c3a] dark:hover:from-[#5a8c3a] dark:hover:to-[#6a9c4a] dark:disabled:from-gray-600 dark:disabled:to-gray-700 ${buttonPressed ? "button-press" : ""}`}
         >
