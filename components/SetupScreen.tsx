@@ -30,6 +30,7 @@ export default function SetupScreen({ onStartGame, onViewRules }: SetupScreenPro
     Array.from({ length: 4 }, () => false)
   );
   const [showHcpTooltip, setShowHcpTooltip] = useState<number | null>(null);
+  const [validationErrors, setValidationErrors] = useState<string[]>([]);
   const nameInputRefs = useRef<(HTMLInputElement | null)[]>([]);
   const hcpInputRefs = useRef<(HTMLInputElement | null)[]>([]);
 
@@ -105,6 +106,11 @@ export default function SetupScreen({ onStartGame, onViewRules }: SetupScreenPro
     setHandicaps(newHandicaps);
     setHandicapInputValues(newInputValues);
     setHandicapErrors(newErrors);
+    
+    // Clear validation errors when user fixes the issue
+    if (newErrors[index] === false && validationErrors.length > 0) {
+      setValidationErrors([]);
+    }
   };
 
 
@@ -119,13 +125,27 @@ export default function SetupScreen({ onStartGame, onViewRules }: SetupScreenPro
       name.trim().length > 0 ? name.trim() : `Player ${index + 1}`
     );
     
-    // Check if all handicaps are valid (if provided)
-    const allHandicapsValid = playerHandicaps.every((hcp) => 
-      hcp === undefined || (hcp >= -54 && hcp <= 54)
-    );
+    // Collect validation errors
+    const errors: string[] = [];
     
-    if (!allHandicapsValid) {
-      // Invalid handicap exists, errors already shown in UI
+    // Check if all handicaps are valid (if provided)
+    const invalidHandicaps: number[] = [];
+    playerHandicaps.forEach((hcp, index) => {
+      if (hcp !== undefined && (hcp < -54 || hcp > 54)) {
+        invalidHandicaps.push(index + 1);
+      }
+    });
+    
+    if (invalidHandicaps.length > 0) {
+      errors.push(`Invalid handicap values for ${invalidHandicaps.length === 1 ? 'player' : 'players'} ${invalidHandicaps.join(', ')}. Must be between -54 and 54.`);
+    }
+    
+    // Set validation errors
+    setValidationErrors(errors);
+    
+    if (errors.length > 0) {
+      // Scroll to top to show error summary
+      window.scrollTo({ top: 0, behavior: 'smooth' });
       return;
     }
     
@@ -198,6 +218,25 @@ export default function SetupScreen({ onStartGame, onViewRules }: SetupScreenPro
   return (
     <div className="golf-course-bg screen-enter flex min-h-screen flex-col items-center px-4 py-4 overflow-y-auto" style={{ paddingBottom: 'max(2rem, env(safe-area-inset-bottom, 2rem))' }}>
       <div className="w-full max-w-md space-y-5 my-auto py-4">
+        {/* Error Summary */}
+        {validationErrors.length > 0 && (
+          <div className="rounded-2xl bg-red-50 dark:bg-red-900/20 border-2 border-red-500 dark:border-red-600 p-4 shadow-lg">
+            <div className="flex items-start gap-2">
+              <span className="text-red-600 dark:text-red-400 text-xl">⚠️</span>
+              <div className="flex-1">
+                <h3 className="font-bold text-red-900 dark:text-red-200 mb-2">Please fix the following errors:</h3>
+                <ul className="list-disc list-inside space-y-1">
+                  {validationErrors.map((error, index) => (
+                    <li key={index} className="text-sm text-red-800 dark:text-red-300">
+                      {error}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            </div>
+          </div>
+        )}
+        
         {/* Header */}
         <div className="text-center">
           <div className="mb-4 flex items-center justify-center gap-3">
@@ -225,6 +264,7 @@ export default function SetupScreen({ onStartGame, onViewRules }: SetupScreenPro
                 setPlayerCount(3);
                 setHandicapErrors(Array.from({ length: 4 }, () => false));
                 setHandicapInputValues(Array.from({ length: 4 }, () => ""));
+                setValidationErrors([]);
               }}
               className={`relative flex min-h-[52px] items-center justify-center rounded-xl border-2 px-4 py-2.5 text-base font-bold transition-all hover:scale-[1.02] active:scale-[0.98] ${
                 playerCount === 3
@@ -239,6 +279,7 @@ export default function SetupScreen({ onStartGame, onViewRules }: SetupScreenPro
                 setPlayerCount(4);
                 setHandicapErrors(Array.from({ length: 4 }, () => false));
                 setHandicapInputValues(Array.from({ length: 4 }, () => ""));
+                setValidationErrors([]);
               }}
               className={`relative flex min-h-[52px] items-center justify-center rounded-xl border-2 px-4 py-2.5 text-base font-bold transition-all hover:scale-[1.02] active:scale-[0.98] ${
                 playerCount === 4
@@ -258,7 +299,7 @@ export default function SetupScreen({ onStartGame, onViewRules }: SetupScreenPro
             Player Names
             <span className="text-xs font-normal text-gray-500 dark:text-gray-400 ml-1">(Optional)</span>
           </label>
-          <div className="space-y-3">
+          <div className="space-y-4">
             {Array.from({ length: playerCount }).map((_, index) => (
               <div key={index} className="space-y-2">
                 <div className="flex items-stretch gap-2 w-full">
