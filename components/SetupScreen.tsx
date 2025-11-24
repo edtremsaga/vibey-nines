@@ -13,9 +13,20 @@ interface SetupScreenProps {
     pars: number[]
   ) => void;
   onViewRules?: () => void;
+  hasIncompleteGame?: boolean;
+  onResumeGame?: () => void;
+  onStartNewGame?: () => void;
+  isStartingGame?: boolean;
 }
 
-export default function SetupScreen({ onStartGame, onViewRules }: SetupScreenProps) {
+export default function SetupScreen({ 
+  onStartGame, 
+  onViewRules, 
+  hasIncompleteGame = false,
+  onResumeGame,
+  onStartNewGame,
+  isStartingGame = false
+}: SetupScreenProps) {
   // Load saved settings on mount
   const savedSettings = loadSettings();
   
@@ -36,12 +47,26 @@ export default function SetupScreen({ onStartGame, onViewRules }: SetupScreenPro
     }
     return Array.from({ length: 4 }, () => "");
   });
-  const [handicaps, setHandicaps] = useState<(number | undefined)[]>(() =>
-    Array.from({ length: 4 }, () => undefined)
-  );
-  const [handicapInputValues, setHandicapInputValues] = useState<string[]>(() =>
-    Array.from({ length: 4 }, () => "")
-  );
+  const [handicaps, setHandicaps] = useState<(number | undefined)[]>(() => {
+    if (savedSettings?.handicaps) {
+      const hcps = [...savedSettings.handicaps];
+      while (hcps.length < 4) {
+        hcps.push(undefined);
+      }
+      return hcps.slice(0, 4);
+    }
+    return Array.from({ length: 4 }, () => undefined);
+  });
+  const [handicapInputValues, setHandicapInputValues] = useState<string[]>(() => {
+    if (savedSettings?.handicaps) {
+      const hcps = [...savedSettings.handicaps];
+      while (hcps.length < 4) {
+        hcps.push(undefined);
+      }
+      return hcps.slice(0, 4).map(hcp => hcp !== undefined ? String(hcp) : "");
+    }
+    return Array.from({ length: 4 }, () => "");
+  });
   const [handicapErrors, setHandicapErrors] = useState<boolean[]>(() =>
     Array.from({ length: 4 }, () => false)
   );
@@ -187,14 +212,47 @@ export default function SetupScreen({ onStartGame, onViewRules }: SetupScreenPro
       return;
     }
     
-    // Save settings for next time (save entered names, not defaults)
+    // Save settings for next time (save entered names and handicaps, not defaults)
     saveSettings({
       playerCount,
       holeCount,
       playerNames: names, // Save the names as entered (empty strings if not entered)
+      handicaps: playerHandicaps, // Save handicaps as entered
     });
     
     onStartGame(playerCount, holeCount, finalNames, playerHandicaps, holePars);
+  };
+
+  const handleQuickStart = () => {
+    // Use saved settings or defaults
+    const savedSettings = loadSettings();
+    const quickPlayerCount = savedSettings?.playerCount || 3;
+    const quickHoleCount = savedSettings?.holeCount || 18;
+    const quickNames = savedSettings?.playerNames || Array.from({ length: 4 }, () => "");
+    const quickHandicaps = savedSettings?.handicaps || Array.from({ length: 4 }, () => undefined);
+    
+    // Ensure handicaps array has correct length
+    const finalHandicaps = [...quickHandicaps];
+    while (finalHandicaps.length < 4) {
+      finalHandicaps.push(undefined);
+    }
+    
+    // Use default names if saved names are empty
+    const finalNames = quickNames.map((name, index) => 
+      name.trim().length > 0 ? name.trim() : `Player ${index + 1}`
+    );
+    
+    const holePars = Array.from({ length: quickHoleCount }, () => 4);
+    
+    // Save settings (already saved, but ensure consistency)
+    saveSettings({
+      playerCount: quickPlayerCount,
+      holeCount: quickHoleCount,
+      playerNames: quickNames,
+      handicaps: finalHandicaps,
+    });
+    
+    onStartGame(quickPlayerCount, quickHoleCount, finalNames, finalHandicaps.slice(0, quickPlayerCount), holePars);
   };
 
   const handleNameKeyDown = (e: React.KeyboardEvent<HTMLInputElement>, index: number) => {
@@ -418,6 +476,58 @@ export default function SetupScreen({ onStartGame, onViewRules }: SetupScreenPro
           </p>
         </div>
 
+        {/* Game Resume Prompt */}
+        {hasIncompleteGame && onResumeGame && onStartNewGame && (
+          <div className="rounded-2xl bg-blue-50 dark:bg-blue-900/20 border-2 border-blue-500 dark:border-blue-600 p-5 shadow-xl">
+            <div className="flex items-start gap-3">
+              <span className="text-blue-600 dark:text-blue-400 text-2xl flex-shrink-0">⏸️</span>
+              <div className="flex-1">
+                <h3 className="font-bold text-blue-900 dark:text-blue-200 mb-2">Incomplete Game Found</h3>
+                <p className="text-sm text-blue-800 dark:text-blue-300 mb-3">
+                  You have an unfinished game. Would you like to resume it or start a new one?
+                </p>
+                <div className="flex gap-2">
+                  <button
+                    onClick={onResumeGame}
+                    className="flex-1 min-h-[44px] rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-semibold px-4 py-2 text-sm transition-all active:scale-[0.98]"
+                  >
+                    Resume Game
+                  </button>
+                  <button
+                    onClick={onStartNewGame}
+                    className="flex-1 min-h-[44px] rounded-xl bg-white dark:bg-gray-700 border-2 border-blue-600 text-blue-600 dark:text-blue-400 font-semibold px-4 py-2 text-sm transition-all hover:bg-blue-50 dark:hover:bg-blue-900/20 active:scale-[0.98]"
+                  >
+                    Start New
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Quick Start Button */}
+        <div className="rounded-2xl bg-white/80 backdrop-blur-sm p-5 shadow-xl dark:bg-gray-800/80">
+          <button
+            onClick={handleQuickStart}
+            disabled={isStartingGame}
+            className="flex min-h-[52px] w-full items-center justify-center rounded-xl bg-gradient-to-r from-blue-600 to-blue-700 px-4 py-2.5 text-base font-bold text-white shadow-lg transition-all hover:from-blue-700 hover:to-blue-800 hover:shadow-xl hover:scale-[1.02] active:scale-[0.98] focus:outline-none focus:ring-4 focus:ring-blue-500/50 disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            {isStartingGame ? (
+              <>
+                <span className="animate-spin mr-2">⏳</span>
+                Starting...
+              </>
+            ) : (
+              <>
+                ⚡ QUICK START ⚡
+              </>
+            )}
+          </button>
+          <p className="mt-2 text-xs text-center text-gray-500 dark:text-gray-400">
+            Start with your last settings
+          </p>
+        </div>
+
         {/* Number of Holes */}
         <div className="rounded-2xl bg-white/80 backdrop-blur-sm p-5 shadow-xl dark:bg-gray-800/80">
           <label className="mb-3 flex items-center gap-2 text-base font-bold text-[#2d5016] dark:text-green-300">
@@ -457,9 +567,19 @@ export default function SetupScreen({ onStartGame, onViewRules }: SetupScreenPro
         >
           <button
             type="submit"
-            className="flex min-h-[52px] w-full items-center justify-center rounded-xl bg-gradient-to-r from-[#2d5016] to-[#3d6b1f] px-4 py-2.5 text-base font-bold text-white shadow-lg transition-all hover:from-[#3d6026] hover:to-[#4d7036] hover:shadow-xl hover:scale-[1.02] active:scale-[0.98] focus:outline-none focus:ring-4 focus:ring-[#2d5016]/50 dark:from-[#4a7c2a] dark:to-[#5a8c3a] dark:hover:from-[#5a8c3a] dark:hover:to-[#6a9c4a]"
+            disabled={isStartingGame}
+            className="flex min-h-[52px] w-full items-center justify-center rounded-xl bg-gradient-to-r from-[#2d5016] to-[#3d6b1f] px-4 py-2.5 text-base font-bold text-white shadow-lg transition-all hover:from-[#3d6026] hover:to-[#4d7036] hover:shadow-xl hover:scale-[1.02] active:scale-[0.98] focus:outline-none focus:ring-4 focus:ring-[#2d5016]/50 dark:from-[#4a7c2a] dark:to-[#5a8c3a] dark:hover:from-[#5a8c3a] dark:hover:to-[#6a9c4a] disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            ⛳ START GAME ⛳
+            {isStartingGame ? (
+              <>
+                <span className="animate-spin mr-2">⏳</span>
+                Starting...
+              </>
+            ) : (
+              <>
+                ⛳ START GAME ⛳
+              </>
+            )}
           </button>
         </form>
 

@@ -9,19 +9,25 @@ import GameScreen from "@/components/GameScreen";
 import ScoreboardScreen from "@/components/ScoreboardScreen";
 import ResultsScreen from "@/components/ResultsScreen";
 import RulesScreen from "@/components/RulesScreen";
+import ErrorNotification from "@/components/ErrorNotification";
+import SuccessNotification from "@/components/SuccessNotification";
 
 type View = "setup" | "game" | "scoreboard" | "results" | "rules";
 
 export default function Home() {
   const [view, setView] = useState<View>("setup");
   const [game, setGame] = useState<Game | null>(null);
+  const [hasIncompleteGame, setHasIncompleteGame] = useState(false);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [successMessage, setSuccessMessage] = useState<string | null>(null);
+  const [isStartingGame, setIsStartingGame] = useState(false);
 
   // Load game from storage on mount
   useEffect(() => {
     const savedGame = loadGame();
     if (savedGame && !savedGame.isComplete) {
-      setGame(savedGame);
-      setView("game");
+      setHasIncompleteGame(true);
+      // Don't auto-load, let user choose to resume
     }
   }, []);
 
@@ -32,10 +38,39 @@ export default function Home() {
     handicaps: (number | undefined)[],
     pars: number[]
   ) => {
-    const newGame = createGame(playerCount, holeCount, playerNames, handicaps, pars);
-    setGame(newGame);
-    saveGame(newGame);
-    setView("game");
+    setIsStartingGame(true);
+    setHasIncompleteGame(false);
+    
+    // Small delay for visual feedback
+    setTimeout(() => {
+      try {
+        const newGame = createGame(playerCount, holeCount, playerNames, handicaps, pars);
+        setGame(newGame);
+        saveGame(newGame);
+        setView("game");
+        setSuccessMessage("Game started!");
+        setIsStartingGame(false);
+      } catch (error) {
+        setErrorMessage("Failed to start game. Please try again.");
+        setIsStartingGame(false);
+      }
+    }, 300);
+  };
+
+  const handleResumeGame = () => {
+    const savedGame = loadGame();
+    if (savedGame && !savedGame.isComplete) {
+      setGame(savedGame);
+      setView("game");
+      setHasIncompleteGame(false);
+      setSuccessMessage("Game resumed!");
+    }
+  };
+
+  const handleStartNewGame = () => {
+    setHasIncompleteGame(false);
+    setGame(null);
+    setView("setup");
   };
 
   const handleGameUpdate = (updatedGame: Game) => {
@@ -52,9 +87,10 @@ export default function Home() {
       const updatedGame = editHoleScores(game, holeNumber, scores);
       setGame(updatedGame);
       saveGame(updatedGame);
+      setSuccessMessage("Hole updated successfully!");
     } catch (error) {
       console.error("Error editing hole:", error);
-      alert("Failed to edit hole. Please try again.");
+      setErrorMessage("Failed to edit hole. Please try again.");
     }
   };
 
@@ -79,10 +115,28 @@ export default function Home() {
 
   if (view === "setup") {
     return (
-      <SetupScreen
-        onStartGame={handleStartGame}
-        onViewRules={() => setView("rules")}
-      />
+      <>
+        {errorMessage && (
+          <ErrorNotification
+            message={errorMessage}
+            onClose={() => setErrorMessage(null)}
+          />
+        )}
+        {successMessage && (
+          <SuccessNotification
+            message={successMessage}
+            onClose={() => setSuccessMessage(null)}
+          />
+        )}
+        <SetupScreen
+          onStartGame={handleStartGame}
+          onViewRules={() => setView("rules")}
+          hasIncompleteGame={hasIncompleteGame}
+          onResumeGame={handleResumeGame}
+          onStartNewGame={handleStartNewGame}
+          isStartingGame={isStartingGame}
+        />
+      </>
     );
   }
 
@@ -111,12 +165,26 @@ export default function Home() {
   }
 
   return (
-    <GameScreen
-      game={game}
-      onGameUpdate={handleGameUpdate}
-      onUpdatePar={handleUpdatePar}
-      onViewScoreboard={() => setView("scoreboard")}
-      onBack={() => setView("setup")}
-    />
+    <>
+      {errorMessage && (
+        <ErrorNotification
+          message={errorMessage}
+          onClose={() => setErrorMessage(null)}
+        />
+      )}
+      {successMessage && (
+        <SuccessNotification
+          message={successMessage}
+          onClose={() => setSuccessMessage(null)}
+        />
+      )}
+      <GameScreen
+        game={game}
+        onGameUpdate={handleGameUpdate}
+        onUpdatePar={handleUpdatePar}
+        onViewScoreboard={() => setView("scoreboard")}
+        onBack={() => setView("setup")}
+      />
+    </>
   );
 }

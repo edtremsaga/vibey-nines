@@ -109,6 +109,15 @@ export default function GameScreen({
           inputRefs.current[index + 1]?.focus();
         }, 50);
       }
+      
+      // Auto-calculate if all scores are now entered
+      const allScoresEntered = newScores.every((s) => s > 0);
+      if (allScoresEntered) {
+        // Small delay to allow user to see the last score entered
+        setTimeout(() => {
+          handleCalculate(newScores);
+        }, 300);
+      }
     } else {
       // Invalid input - show error
       const newErrors = [...scoreErrors];
@@ -171,9 +180,10 @@ export default function GameScreen({
     }
   };
 
-  const handleCalculate = () => {
+  const handleCalculate = (scoresToUse?: number[]) => {
+    const scoresForCalc = scoresToUse || scores;
     // Validate all scores are entered
-    if (scores.some((s) => s === 0)) {
+    if (scoresForCalc.some((s) => s === 0)) {
       return;
     }
 
@@ -181,8 +191,8 @@ export default function GameScreen({
     setButtonPressed(true);
     setTimeout(() => setButtonPressed(false), 200);
 
-    const calculatedPoints = calculatePoints(scores, game.playerCount);
-    const tieData = getTieInfo(scores, calculatedPoints);
+    const calculatedPoints = calculatePoints(scoresForCalc, game.playerCount);
+    const tieData = getTieInfo(scoresForCalc, calculatedPoints);
     
     setPoints(calculatedPoints);
     setTieInfo(tieData);

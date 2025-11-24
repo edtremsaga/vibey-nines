@@ -34,6 +34,7 @@ export interface GameSettings {
   playerCount: 3 | 4;
   holeCount: 9 | 18;
   playerNames: string[];
+  handicaps?: (number | undefined)[];
 }
 
 export function saveSettings(settings: GameSettings): void {
