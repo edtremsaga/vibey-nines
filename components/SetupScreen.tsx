@@ -505,29 +505,6 @@ export default function SetupScreen({
           </div>
         )}
 
-        {/* Quick Start Button */}
-        <div className="rounded-2xl bg-white/80 backdrop-blur-sm p-5 shadow-xl dark:bg-gray-800/80">
-          <button
-            onClick={handleQuickStart}
-            disabled={isStartingGame}
-            className="flex min-h-[52px] w-full items-center justify-center rounded-xl bg-gradient-to-r from-blue-600 to-blue-700 px-4 py-2.5 text-base font-bold text-white shadow-lg transition-all hover:from-blue-700 hover:to-blue-800 hover:shadow-xl hover:scale-[1.02] active:scale-[0.98] focus:outline-none focus:ring-4 focus:ring-blue-500/50 disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            {isStartingGame ? (
-              <>
-                <span className="animate-spin mr-2">⏳</span>
-                Starting...
-              </>
-            ) : (
-              <>
-                ⚡ QUICK START ⚡
-              </>
-            )}
-          </button>
-          <p className="mt-2 text-xs text-center text-gray-500 dark:text-gray-400">
-            Start with your last settings
-          </p>
-        </div>
-
         {/* Number of Holes */}
         <div className="rounded-2xl bg-white/80 backdrop-blur-sm p-5 shadow-xl dark:bg-gray-800/80">
           <label className="mb-3 flex items-center gap-2 text-base font-bold text-[#2d5016] dark:text-green-300">
@@ -582,6 +559,29 @@ export default function SetupScreen({
             )}
           </button>
         </form>
+
+        {/* Quick Start Button */}
+        <div className="rounded-2xl bg-white/80 backdrop-blur-sm p-5 shadow-xl dark:bg-gray-800/80">
+          <button
+            onClick={handleQuickStart}
+            disabled={isStartingGame}
+            className="flex min-h-[52px] w-full items-center justify-center rounded-xl bg-gradient-to-r from-blue-600 to-blue-700 px-4 py-2.5 text-base font-bold text-white shadow-lg transition-all hover:from-blue-700 hover:to-blue-800 hover:shadow-xl hover:scale-[1.02] active:scale-[0.98] focus:outline-none focus:ring-4 focus:ring-blue-500/50 disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            {isStartingGame ? (
+              <>
+                <span className="animate-spin mr-2">⏳</span>
+                Starting...
+              </>
+            ) : (
+              <>
+                ⚡ QUICK START ⚡
+              </>
+            )}
+          </button>
+          <p className="mt-2 text-xs text-center text-gray-500 dark:text-gray-400">
+            Start with your last settings
+          </p>
+        </div>
 
         {/* Help Link */}
         <div className="text-center pt-4 pb-2">
