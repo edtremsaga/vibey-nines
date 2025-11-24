@@ -276,7 +276,7 @@ export default function SetupScreen({ onStartGame, onViewRules }: SetupScreenPro
                       }
                     }}
                     placeholder="HCP"
-                    className={`flex-shrink-0 w-28 rounded-xl border-2 px-3 py-3 text-base leading-normal min-h-[48px] shadow-sm focus:outline-none focus:ring-2 focus:ring-[#2d5016]/50 ${
+                    className={`flex-shrink-0 w-20 rounded-xl border-2 px-3 py-3 text-base leading-normal min-h-[48px] shadow-sm focus:outline-none focus:ring-2 focus:ring-[#2d5016]/50 ${
                       handicapErrors[index]
                         ? "border-red-500 bg-red-50 dark:border-red-600 dark:bg-red-900/20"
                         : "border-gray-300 bg-white/90 dark:border-gray-600 dark:bg-gray-700/90"
