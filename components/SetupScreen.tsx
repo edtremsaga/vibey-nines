@@ -40,6 +40,19 @@ export default function SetupScreen({ onStartGame, onViewRules }: SetupScreenPro
     setPlayerNames(newNames);
   };
 
+  const handlePlayerNameBlur = (index: number) => {
+    // Capitalize first letter when user finishes editing
+    const name = playerNames[index];
+    if (name && name.length > 0) {
+      const capitalized = name.charAt(0).toUpperCase() + name.slice(1);
+      if (capitalized !== name) {
+        const newNames = [...playerNames];
+        newNames[index] = capitalized;
+        setPlayerNames(newNames);
+      }
+    }
+  };
+
   const handleHandicapChange = (index: number, value: string) => {
     const newHandicaps = [...handicaps];
     const newErrors = [...handicapErrors];
@@ -155,19 +168,8 @@ export default function SetupScreen({ onStartGame, onViewRules }: SetupScreenPro
   const handleNameKeyDown = (e: React.KeyboardEvent<HTMLInputElement>, index: number) => {
     if (e.key === 'Enter' || e.key === 'Tab') {
       e.preventDefault();
-      // Move to HCP field for current player, or next player's name field
-      if (e.key === 'Enter') {
-        // Enter goes to HCP field
-        hcpInputRefs.current[index]?.focus();
-      } else {
-        // Tab goes to next field
-        if (index < playerCount - 1) {
-          nameInputRefs.current[index + 1]?.focus();
-        } else {
-          // Last player name, go to first HCP field
-          hcpInputRefs.current[0]?.focus();
-        }
-      }
+      // Both Enter and Tab go to current player's HCP field
+      hcpInputRefs.current[index]?.focus();
     }
   };
 
@@ -310,6 +312,7 @@ export default function SetupScreen({ onStartGame, onViewRules }: SetupScreenPro
                     type="text"
                     value={playerNames[index]}
                     onChange={(e) => handlePlayerNameChange(index, e.target.value)}
+                    onBlur={() => handlePlayerNameBlur(index)}
                     onKeyDown={(e) => handleNameKeyDown(e, index)}
                     placeholder={`Player ${index + 1}`}
                     autoComplete="name"
