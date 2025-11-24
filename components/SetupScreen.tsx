@@ -320,8 +320,8 @@ export default function SetupScreen({
   };
 
   return (
-    <div className="golf-course-bg screen-enter flex min-h-screen flex-col items-center px-4 py-4 overflow-y-auto" style={{ paddingBottom: 'max(2rem, env(safe-area-inset-bottom, 2rem))' }}>
-      <div className="w-full max-w-md space-y-5 my-auto py-4">
+    <div className="golf-course-bg screen-enter flex min-h-screen flex-col items-center px-4 py-4 overflow-y-auto" style={{ paddingBottom: 'max(3rem, env(safe-area-inset-bottom, 3rem))' }}>
+      <div className="w-full max-w-md space-y-5 py-4 pb-8">
         {/* Error Summary */}
         {validationErrors.length > 0 && (
           <div className="rounded-2xl bg-red-50 dark:bg-red-900/20 border-2 border-red-500 dark:border-red-600 p-4 shadow-lg">
