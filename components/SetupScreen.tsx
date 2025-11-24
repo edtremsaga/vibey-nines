@@ -35,17 +35,26 @@ export default function SetupScreen({ onStartGame, onViewRules }: SetupScreenPro
   const hcpInputRefs = useRef<(HTMLInputElement | null)[]>([]);
 
   const handlePlayerNameChange = (index: number, name: string) => {
+    // Auto-capitalize first letter as user types
+    let capitalizedName = name;
+    if (name.length > 0) {
+      // Capitalize first letter, keep rest as-is
+      capitalizedName = name.charAt(0).toUpperCase() + name.slice(1);
+    }
+    
     const newNames = [...playerNames];
-    newNames[index] = name;
+    newNames[index] = capitalizedName;
     setPlayerNames(newNames);
   };
 
   const handlePlayerNameBlur = (index: number) => {
     // Capitalize first letter when user finishes editing
     const name = playerNames[index];
-    if (name && name.length > 0) {
-      const capitalized = name.charAt(0).toUpperCase() + name.slice(1);
-      if (capitalized !== name) {
+    if (name && name.length > 0 && name.trim().length > 0) {
+      // Capitalize first letter, keep rest as-is
+      const trimmed = name.trim();
+      const capitalized = trimmed.charAt(0).toUpperCase() + trimmed.slice(1);
+      if (capitalized !== trimmed) {
         const newNames = [...playerNames];
         newNames[index] = capitalized;
         setPlayerNames(newNames);
@@ -168,8 +177,20 @@ export default function SetupScreen({ onStartGame, onViewRules }: SetupScreenPro
   const handleNameKeyDown = (e: React.KeyboardEvent<HTMLInputElement>, index: number) => {
     if (e.key === 'Enter' || e.key === 'Tab') {
       e.preventDefault();
+      // Capitalize first letter before moving focus
+      const name = playerNames[index];
+      if (name && name.length > 0) {
+        const capitalized = name.charAt(0).toUpperCase() + name.slice(1);
+        if (capitalized !== name) {
+          const newNames = [...playerNames];
+          newNames[index] = capitalized;
+          setPlayerNames(newNames);
+        }
+      }
       // Both Enter and Tab go to current player's HCP field
-      hcpInputRefs.current[index]?.focus();
+      setTimeout(() => {
+        hcpInputRefs.current[index]?.focus();
+      }, 0);
     }
   };
 
