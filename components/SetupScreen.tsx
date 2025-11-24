@@ -1,7 +1,8 @@
 "use client";
 
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { PlayerCount, HoleCount } from "@/types/game";
+import { saveSettings, loadSettings } from "@/lib/storage";
 
 interface SetupScreenProps {
   onStartGame: (
@@ -15,11 +16,26 @@ interface SetupScreenProps {
 }
 
 export default function SetupScreen({ onStartGame, onViewRules }: SetupScreenProps) {
-  const [playerCount, setPlayerCount] = useState<PlayerCount>(3);
-  const [holeCount, setHoleCount] = useState<HoleCount>(18);
-  const [playerNames, setPlayerNames] = useState<string[]>(() =>
-    Array.from({ length: 4 }, () => "")
+  // Load saved settings on mount
+  const savedSettings = loadSettings();
+  
+  const [playerCount, setPlayerCount] = useState<PlayerCount>(
+    savedSettings?.playerCount || 3
   );
+  const [holeCount, setHoleCount] = useState<HoleCount>(
+    savedSettings?.holeCount || 18
+  );
+  const [playerNames, setPlayerNames] = useState<string[]>(() => {
+    if (savedSettings?.playerNames) {
+      // Ensure array has 4 elements, filling with empty strings if needed
+      const names = [...savedSettings.playerNames];
+      while (names.length < 4) {
+        names.push("");
+      }
+      return names.slice(0, 4);
+    }
+    return Array.from({ length: 4 }, () => "");
+  });
   const [handicaps, setHandicaps] = useState<(number | undefined)[]>(() =>
     Array.from({ length: 4 }, () => undefined)
   );
@@ -170,6 +186,13 @@ export default function SetupScreen({ onStartGame, onViewRules }: SetupScreenPro
       window.scrollTo({ top: 0, behavior: 'smooth' });
       return;
     }
+    
+    // Save settings for next time (save entered names, not defaults)
+    saveSettings({
+      playerCount,
+      holeCount,
+      playerNames: names, // Save the names as entered (empty strings if not entered)
+    });
     
     onStartGame(playerCount, holeCount, finalNames, playerHandicaps, holePars);
   };

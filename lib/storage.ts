@@ -27,3 +27,31 @@ export function clearGame(): void {
   }
 }
 
+// Settings storage
+const SETTINGS_KEY = "vibey-nines-settings";
+
+export interface GameSettings {
+  playerCount: 3 | 4;
+  holeCount: 9 | 18;
+  playerNames: string[];
+}
+
+export function saveSettings(settings: GameSettings): void {
+  if (typeof window !== "undefined") {
+    localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings));
+  }
+}
+
+export function loadSettings(): GameSettings | null {
+  if (typeof window === "undefined") return null;
+  
+  const stored = localStorage.getItem(SETTINGS_KEY);
+  if (!stored) return null;
+
+  try {
+    return JSON.parse(stored) as GameSettings;
+  } catch {
+    return null;
+  }
+}
+
