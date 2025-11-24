@@ -182,16 +182,6 @@ export default function SetupScreen({ onStartGame, onViewRules }: SetupScreenPro
             A Golf Wagering Game{" "}
             <span className="italic text-gray-600 dark:text-gray-300">by Vibey Craft</span>
           </p>
-          
-          {/* Competitive positioning badges */}
-          <div className="mt-4 flex flex-wrap justify-center gap-2">
-            <span className="inline-flex items-center gap-1 rounded-full bg-white/90 backdrop-blur-sm px-4 py-2 text-sm font-semibold text-[#2d5016] shadow-md dark:bg-gray-800/90 dark:text-green-300">
-              ✓ Works Offline
-            </span>
-            <span className="inline-flex items-center gap-1 rounded-full bg-white/90 backdrop-blur-sm px-4 py-2 text-sm font-semibold text-[#2d5016] shadow-md dark:bg-gray-800/90 dark:text-green-300">
-              ✓ No Account Required
-            </span>
-          </div>
         </div>
 
         {/* Number of Players */}
