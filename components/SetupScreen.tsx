@@ -53,7 +53,8 @@ export default function SetupScreen({
       while (hcps.length < 4) {
         hcps.push(undefined);
       }
-      return hcps.slice(0, 4);
+      // Convert null to undefined when loading from storage
+      return hcps.slice(0, 4).map(hcp => hcp === null ? undefined : hcp);
     }
     return Array.from({ length: 4 }, () => undefined);
   });
@@ -63,7 +64,7 @@ export default function SetupScreen({
       while (hcps.length < 4) {
         hcps.push(undefined);
       }
-      return hcps.slice(0, 4).map(hcp => hcp !== undefined ? String(hcp) : "");
+      return hcps.slice(0, 4).map(hcp => (hcp !== undefined && hcp !== null) ? String(hcp) : "");
     }
     return Array.from({ length: 4 }, () => "");
   });
@@ -428,7 +429,7 @@ export default function SetupScreen({
                       }}
                       type="text"
                       inputMode="decimal"
-                      value={handicapInputValues[index] || (handicaps[index] !== undefined ? String(handicaps[index]) : "")}
+                      value={handicapInputValues[index] || (handicaps[index] !== undefined && handicaps[index] !== null ? String(handicaps[index]) : "")}
                       onChange={(e) => handleHandicapChange(index, e.target.value)}
                       onKeyDown={(e) => handleHcpKeyDown(e, index)}
                       onBlur={(e) => {
