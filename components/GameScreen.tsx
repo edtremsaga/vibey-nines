@@ -29,6 +29,9 @@ function GameScreen({
     Array(game.playerCount).fill(false)
   );
   const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
+  const previousHoleRef = useRef<number>(game.currentHole);
+  const lastScrollYRef = useRef<number>(0);
+  const hasUserScrolledRef = useRef<boolean>(false);
   const [parInputValue, setParInputValue] = useState<string>(
     String(game.pars[game.currentHole - 1] || 4)
   );
@@ -41,16 +44,66 @@ function GameScreen({
     [game.currentHole, game.holeCount]
   );
 
-  // Auto-focus first input when entering new hole
+  // Track user scrolling - if user scrolls, don't auto-focus
   useEffect(() => {
-    // Focus first input when hole changes
-    if (inputRefs.current[0]) {
-      setTimeout(() => {
-        inputRefs.current[0]?.focus();
-      }, 100);
-    }
+    const handleScroll = () => {
+      const currentScrollY = window.scrollY;
+      // Detect if user scrolled down (not just tiny movements)
+      if (Math.abs(currentScrollY - lastScrollYRef.current) > 10) {
+        hasUserScrolledRef.current = true;
+      }
+      lastScrollYRef.current = currentScrollY;
+    };
+
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
+
+  // Auto-focus first input when entering new hole (but only if hole actually changed and user hasn't scrolled)
+  useEffect(() => {
+    const holeChanged = previousHoleRef.current !== game.currentHole;
+    
     // Update par input value when hole changes
     setParInputValue(String(game.pars[game.currentHole - 1] || 4));
+
+    if (holeChanged) {
+      // Reset scroll tracking when hole changes
+      previousHoleRef.current = game.currentHole;
+      hasUserScrolledRef.current = false;
+      lastScrollYRef.current = window.scrollY;
+
+      // Only auto-focus if:
+      // 1. User hasn't scrolled significantly
+      // 2. User is not near bottom of page (where View Scoreboard link is)
+      // 3. Input exists
+      if (!hasUserScrolledRef.current && inputRefs.current[0]) {
+        // Check if user is near bottom of page
+        const scrollPosition = window.scrollY;
+        const windowHeight = window.innerHeight;
+        const documentHeight = document.documentElement.scrollHeight;
+        const distanceFromBottom = documentHeight - (scrollPosition + windowHeight);
+        
+        // Only auto-focus if user is not near bottom (within 200px)
+        const isNearBottom = distanceFromBottom < 200;
+
+        if (!isNearBottom) {
+          // Small delay to ensure DOM is ready
+          const timeoutId = setTimeout(() => {
+            // Check again if user scrolled during the delay or is near bottom
+            const currentScrollY = window.scrollY;
+            const currentDocHeight = document.documentElement.scrollHeight;
+            const currentDistanceFromBottom = currentDocHeight - (currentScrollY + window.innerHeight);
+            const stillNearBottom = currentDistanceFromBottom < 200;
+
+            if (!hasUserScrolledRef.current && !stillNearBottom && inputRefs.current[0]) {
+              inputRefs.current[0]?.focus();
+            }
+          }, 100);
+
+          return () => clearTimeout(timeoutId);
+        }
+      }
+    }
   }, [game.currentHole, game.pars]);
 
   useEffect(() => {
