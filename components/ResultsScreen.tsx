@@ -1,23 +1,28 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useMemo, useCallback } from "react";
 import { Game } from "@/types/game";
 import { getSortedPlayers } from "@/lib/game-utils";
 import { calculateTotalNetScore } from "@/lib/handicap-utils";
 import { clearGame } from "@/lib/storage";
+import ErrorNotification from "@/components/ErrorNotification";
+import SuccessNotification from "@/components/SuccessNotification";
 
 interface ResultsScreenProps {
   game: Game;
   onNewGame: () => void;
 }
 
-export default function ResultsScreen({ game, onNewGame }: ResultsScreenProps) {
-  const sortedPlayers = getSortedPlayers(game.players);
+function ResultsScreen({ game, onNewGame }: ResultsScreenProps) {
+  // Memoize expensive calculations
+  const sortedPlayers = useMemo(() => getSortedPlayers(game.players), [game.players]);
   const winner = sortedPlayers[0];
   const [displayedScore, setDisplayedScore] = useState(0);
   const [showConfetti, setShowConfetti] = useState(true);
   const confettiIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const hasAnimated = useRef(false);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
   // Animate number counting
   useEffect(() => {
@@ -51,6 +56,7 @@ export default function ResultsScreen({ game, onNewGame }: ResultsScreenProps) {
     if (!showConfetti) return;
 
     const colors = ["#ffd700", "#ff6b6b", "#4ecdc4", "#95e1d3", "#f38181", "#aa96da"];
+    const confettiElements: HTMLDivElement[] = [];
     
     const createConfetti = () => {
       for (let i = 0; i < 20; i++) {
@@ -63,9 +69,14 @@ export default function ResultsScreen({ game, onNewGame }: ResultsScreenProps) {
         confetti.style.animationDelay = Math.random() * 3 + "s";
         confetti.style.animationDuration = (Math.random() * 2 + 2) + "s";
         document.body.appendChild(confetti);
+        confettiElements.push(confetti);
 
         setTimeout(() => {
           confetti.remove();
+          const index = confettiElements.indexOf(confetti);
+          if (index > -1) {
+            confettiElements.splice(index, 1);
+          }
         }, 5000);
       }
     };
@@ -78,7 +89,7 @@ export default function ResultsScreen({ game, onNewGame }: ResultsScreenProps) {
       createConfetti();
     }, 500);
 
-    setTimeout(() => {
+    const timeoutId = setTimeout(() => {
       if (confettiIntervalRef.current) {
         clearInterval(confettiIntervalRef.current);
       }
@@ -86,18 +97,27 @@ export default function ResultsScreen({ game, onNewGame }: ResultsScreenProps) {
     }, 5000);
 
     return () => {
+      // Cleanup: remove all confetti elements and clear intervals
+      confettiElements.forEach(el => {
+        if (el && el.parentNode) {
+          el.remove();
+        }
+      });
+      // Also clean up any remaining confetti elements in DOM
+      document.querySelectorAll('.confetti').forEach(el => el.remove());
       if (confettiIntervalRef.current) {
         clearInterval(confettiIntervalRef.current);
       }
+      clearTimeout(timeoutId);
     };
   }, [showConfetti]);
 
-  const handleNewGame = () => {
+  const handleNewGame = useCallback(() => {
     clearGame();
     onNewGame();
-  };
+  }, [onNewGame]);
 
-  const handleShare = async () => {
+  const handleShare = useCallback(async () => {
     const text = `🏆 Nines Golf Results 🏆\n\nWinner: ${winner.name} - ${winner.totalPoints} points\n\nFinal Standings:\n${sortedPlayers
       .map((p, i) => {
         const medal = i === 0 ? "🥇" : i === 1 ? "🥈" : i === 2 ? "🥉" : `${i + 1}.`;
@@ -115,18 +135,29 @@ export default function ResultsScreen({ game, onNewGame }: ResultsScreenProps) {
       // Fallback: copy to clipboard
       try {
         await navigator.clipboard.writeText(text);
-        alert("Results copied to clipboard!");
+        setSuccessMessage("Results copied to clipboard!");
       } catch (err) {
         // Handle clipboard errors gracefully
-        alert("Unable to copy to clipboard. Please copy the results manually.");
-        // Optionally show the text so user can copy manually
+        setErrorMessage("Unable to copy to clipboard. Please try again.");
         console.warn("Clipboard API error:", err);
       }
     }
-  };
+  }, [winner, sortedPlayers]);
 
   return (
     <div className="golf-course-bg screen-enter flex min-h-screen flex-col items-center justify-center px-4 py-8">
+      {errorMessage && (
+        <ErrorNotification
+          message={errorMessage}
+          onClose={() => setErrorMessage(null)}
+        />
+      )}
+      {successMessage && (
+        <SuccessNotification
+          message={successMessage}
+          onClose={() => setSuccessMessage(null)}
+        />
+      )}
       <div className="w-full max-w-md space-y-6">
         {/* Winner Celebration */}
         <div className="text-center">
@@ -213,4 +244,6 @@ export default function ResultsScreen({ game, onNewGame }: ResultsScreenProps) {
     </div>
   );
 }
+
+export default React.memo(ResultsScreen);
 

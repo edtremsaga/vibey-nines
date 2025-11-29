@@ -1,10 +1,11 @@
 "use client";
 
-import { useState } from "react";
+import React, { useState, useMemo, useCallback } from "react";
 import { Game } from "@/types/game";
 import { getSortedPlayers, getLeader } from "@/lib/game-utils";
 import { calculatePoints } from "@/lib/scoring";
 import { calculateTotalNetScore, calculateNetScore } from "@/lib/handicap-utils";
+import ErrorNotification from "@/components/ErrorNotification";
 
 interface ScoreboardScreenProps {
   game: Game;
@@ -13,17 +14,19 @@ interface ScoreboardScreenProps {
   onEditHole?: (holeNumber: number, scores: number[]) => void;
 }
 
-export default function ScoreboardScreen({
+function ScoreboardScreen({
   game,
   onBack,
   onReturnToGame,
   onEditHole,
 }: ScoreboardScreenProps) {
-  const sortedPlayers = getSortedPlayers(game.players);
-  const leader = getLeader(game.players);
+  // Memoize expensive calculations
+  const sortedPlayers = useMemo(() => getSortedPlayers(game.players), [game.players]);
+  const leader = useMemo(() => getLeader(game.players), [game.players]);
   const [editingHole, setEditingHole] = useState<number | null>(null);
   const [editScores, setEditScores] = useState<number[]>([]);
   const [showConfirm, setShowConfirm] = useState(false);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   // Helper to get hole performance color
   const getHoleColorClass = (points: number, maxPoints: number) => {
@@ -46,41 +49,47 @@ export default function ScoreboardScreen({
     return Math.max(...points, 5);
   };
 
-  const handleEditHole = (holeNumber: number) => {
+  const handleEditHole = useCallback((holeNumber: number) => {
     if (!onEditHole) return;
     
     const holeIndex = holeNumber - 1;
     const currentScores = game.players.map((p) => p.scores[holeIndex] || 0);
     setEditScores(currentScores);
     setEditingHole(holeNumber);
-  };
+  }, [game.players, onEditHole]);
 
-  const handleSaveEdit = () => {
+  const handleSaveEdit = useCallback(() => {
     if (editingHole && onEditHole && editScores.every(s => s > 0 && s <= 20)) {
       onEditHole(editingHole, editScores);
       setEditingHole(null);
       setShowConfirm(false);
       setEditScores([]);
     }
-  };
+  }, [editingHole, onEditHole, editScores]);
 
-  const handleCancelEdit = () => {
+  const handleCancelEdit = useCallback(() => {
     setEditingHole(null);
     setShowConfirm(false);
     setEditScores([]);
-  };
+  }, []);
 
-  const handleConfirmEdit = () => {
+  const handleConfirmEdit = useCallback(() => {
     // Validate all scores are entered
     if (editScores.every(s => s > 0 && s <= 20)) {
       setShowConfirm(true);
     } else {
-      alert("Please enter valid scores (1-20) for all players");
+      setErrorMessage("Please enter valid scores (1-20) for all players");
     }
-  };
+  }, [editScores]);
 
   return (
     <div className="golf-course-bg screen-enter flex min-h-screen flex-col px-4 py-4">
+      {errorMessage && (
+        <ErrorNotification
+          message={errorMessage}
+          onClose={() => setErrorMessage(null)}
+        />
+      )}
       {/* Header */}
       <div className="mb-4 flex items-center justify-between">
         <button
@@ -304,4 +313,6 @@ export default function ScoreboardScreen({
     </div>
   );
 }
+
+export default React.memo(ScoreboardScreen);
 

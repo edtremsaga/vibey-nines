@@ -11,10 +11,11 @@ import ResultsScreen from "@/components/ResultsScreen";
 import RulesScreen from "@/components/RulesScreen";
 import ErrorNotification from "@/components/ErrorNotification";
 import SuccessNotification from "@/components/SuccessNotification";
+import ErrorBoundary from "@/components/ErrorBoundary";
 
 type View = "setup" | "game" | "scoreboard" | "results" | "rules";
 
-export default function Home() {
+function HomeContent() {
   const [view, setView] = useState<View>("setup");
   const [game, setGame] = useState<Game | null>(null);
   const [hasIncompleteGame, setHasIncompleteGame] = useState(false);
@@ -186,5 +187,13 @@ export default function Home() {
         onBack={() => setView("setup")}
       />
     </>
+  );
+}
+
+export default function Home() {
+  return (
+    <ErrorBoundary>
+      <HomeContent />
+    </ErrorBoundary>
   );
 }

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useMemo, useCallback } from "react";
 import { Game } from "@/types/game";
 import { addHoleScores, getLeader } from "@/lib/game-utils";
 import { calculateTotalNetScore } from "@/lib/handicap-utils";
@@ -14,7 +14,7 @@ interface GameScreenProps {
   onBack: () => void;
 }
 
-export default function GameScreen({
+function GameScreen({
   game,
   onGameUpdate,
   onUpdatePar,
@@ -28,10 +28,17 @@ export default function GameScreen({
   const [scoreErrors, setScoreErrors] = useState<boolean[]>(() =>
     Array(game.playerCount).fill(false)
   );
-  const [buttonPressed, setButtonPressed] = useState(false);
   const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
   const [parInputValue, setParInputValue] = useState<string>(
     String(game.pars[game.currentHole - 1] || 4)
+  );
+
+  // Memoize expensive calculations
+  const leader = useMemo(() => getLeader(game.players), [game.players]);
+  const hasScores = useMemo(() => scores.every((s) => s > 0), [scores]);
+  const progressPercentage = useMemo(
+    () => ((game.currentHole - 1) / game.holeCount) * 100,
+    [game.currentHole, game.holeCount]
   );
 
   // Auto-focus first input when entering new hole
@@ -64,16 +71,19 @@ export default function GameScreen({
     }
   }, []);
 
-  const handleScoreChange = (index: number, value: string) => {
+  const handleScoreChange = useCallback((index: number, value: string) => {
     // Allow empty string for editing
     if (value === "") {
-      const newScores = [...scores];
-      newScores[index] = 0;
-      setScores(newScores);
-      // Clear error for this input
-      const newErrors = [...scoreErrors];
-      newErrors[index] = false;
-      setScoreErrors(newErrors);
+      setScores((prev) => {
+        const newScores = [...prev];
+        newScores[index] = 0;
+        return newScores;
+      });
+      setScoreErrors((prev) => {
+        const newErrors = [...prev];
+        newErrors[index] = false;
+        return newErrors;
+      });
       return;
     }
     
@@ -88,13 +98,16 @@ export default function GameScreen({
     const numValue = parseInt(cleanedValue);
     // Only allow values from 1 to 20
     if (!isNaN(numValue) && numValue >= 1 && numValue <= 20) {
-      const newScores = [...scores];
-      newScores[index] = numValue;
-      setScores(newScores);
-      // Clear error for this input
-      const newErrors = [...scoreErrors];
-      newErrors[index] = false;
-      setScoreErrors(newErrors);
+      setScores((prev) => {
+        const newScores = [...prev];
+        newScores[index] = numValue;
+        return newScores;
+      });
+      setScoreErrors((prev) => {
+        const newErrors = [...prev];
+        newErrors[index] = false;
+        return newErrors;
+      });
       
       // Auto-advance to next input if valid score entered
       if (index < game.playerCount - 1 && inputRefs.current[index + 1]) {
@@ -104,9 +117,11 @@ export default function GameScreen({
       }
     } else {
       // Invalid input - show error
-      const newErrors = [...scoreErrors];
-      newErrors[index] = true;
-      setScoreErrors(newErrors);
+      setScoreErrors((prev) => {
+        const newErrors = [...prev];
+        newErrors[index] = true;
+        return newErrors;
+      });
       // Clear error after 3 seconds
       setTimeout(() => {
         setScoreErrors((prev) => {
@@ -116,7 +131,7 @@ export default function GameScreen({
         });
       }, 3000);
     }
-  };
+  }, [game.playerCount]);
 
   const handleScoreKeyDown = (e: React.KeyboardEvent<HTMLInputElement>, index: number) => {
     // Allow: backspace, delete, tab, escape, enter
@@ -146,7 +161,7 @@ export default function GameScreen({
     }
   };
 
-  const handleKeyDown = (index: number, e: React.KeyboardEvent<HTMLInputElement>) => {
+  const handleKeyDown = useCallback((index: number, e: React.KeyboardEvent<HTMLInputElement>) => {
     // First check if it's a non-numeric character and block it
     handleScoreKeyDown(e, index);
     
@@ -163,17 +178,13 @@ export default function GameScreen({
       e.preventDefault();
       inputRefs.current[index - 1]?.focus();
     }
-  };
+  }, [hasScores, handleNextHole, game.playerCount]);
 
-  const handleNextHole = () => {
+  const handleNextHole = useCallback(() => {
     // Validate all scores are entered
     if (!hasScores) {
       return;
     }
-
-    // Button press animation
-    setButtonPressed(true);
-    setTimeout(() => setButtonPressed(false), 200);
 
     // Calculate points in the background and advance to next hole
     const updatedGame = addHoleScores(game, scores);
@@ -183,12 +194,7 @@ export default function GameScreen({
     // Reset for next hole
     setScores(Array(game.playerCount).fill(0));
     setScoreErrors(Array(game.playerCount).fill(false));
-  };
-
-  const leader = getLeader(game.players);
-  const currentHoleIndex = game.currentHole - 1;
-  const hasScores = scores.every((s) => s > 0);
-  const progressPercentage = ((game.currentHole - 1) / game.holeCount) * 100;
+  }, [hasScores, game, scores, onGameUpdate]);
 
   return (
     <div className="golf-course-bg screen-enter flex min-h-screen flex-col px-4 py-4">
@@ -409,4 +415,6 @@ export default function GameScreen({
     </div>
   );
 }
+
+export default React.memo(GameScreen);
 
