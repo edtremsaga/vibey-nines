@@ -109,12 +109,19 @@ export default function ResultsScreen({ game, onNewGame }: ResultsScreenProps) {
       try {
         await navigator.share({ text });
       } catch (err) {
-        // User cancelled
+        // User cancelled or share failed
       }
     } else {
       // Fallback: copy to clipboard
-      await navigator.clipboard.writeText(text);
-      alert("Results copied to clipboard!");
+      try {
+        await navigator.clipboard.writeText(text);
+        alert("Results copied to clipboard!");
+      } catch (err) {
+        // Handle clipboard errors gracefully
+        alert("Unable to copy to clipboard. Please copy the results manually.");
+        // Optionally show the text so user can copy manually
+        console.warn("Clipboard API error:", err);
+      }
     }
   };
 

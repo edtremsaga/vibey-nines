@@ -4,7 +4,17 @@ const STORAGE_KEY = "vibey-nines-game";
 
 export function saveGame(game: Game): void {
   if (typeof window !== "undefined") {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(game));
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(game));
+    } catch (error) {
+      // Handle localStorage errors gracefully
+      if (error instanceof DOMException && error.name === 'QuotaExceededError') {
+        console.warn("localStorage is full. Game progress may not be saved.");
+      } else {
+        console.warn("Failed to save game to localStorage:", error);
+      }
+      // App continues to work even if save fails
+    }
   }
 }
 
@@ -23,7 +33,12 @@ export function loadGame(): Game | null {
 
 export function clearGame(): void {
   if (typeof window !== "undefined") {
-    localStorage.removeItem(STORAGE_KEY);
+    try {
+      localStorage.removeItem(STORAGE_KEY);
+    } catch (error) {
+      // Handle localStorage errors gracefully (unlikely for removeItem, but safe to catch)
+      console.warn("Failed to clear game from localStorage:", error);
+    }
   }
 }
 
@@ -39,7 +54,22 @@ export interface GameSettings {
 
 export function saveSettings(settings: GameSettings): void {
   if (typeof window !== "undefined") {
-    localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings));
+    try {
+      // Filter out null values before saving
+      const cleanedSettings = {
+        ...settings,
+        handicaps: settings.handicaps?.map(hcp => hcp === null ? undefined : hcp)
+      };
+      localStorage.setItem(SETTINGS_KEY, JSON.stringify(cleanedSettings));
+    } catch (error) {
+      // Handle localStorage errors gracefully
+      if (error instanceof DOMException && error.name === 'QuotaExceededError') {
+        console.warn("localStorage is full. Settings may not be saved.");
+      } else {
+        console.warn("Failed to save settings to localStorage:", error);
+      }
+      // App continues to work even if save fails
+    }
   }
 }
 

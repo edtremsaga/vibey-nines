@@ -1,4 +1,5 @@
 import { Game, Player, PlayerCount, HoleCount } from "@/types/game";
+import { calculatePoints } from "./scoring";
 
 export function createGame(
   playerCount: PlayerCount,
@@ -39,8 +40,7 @@ export function addHoleScores(
     throw new Error("Number of scores must match player count");
   }
 
-  // Calculate points (import from scoring.ts)
-  const { calculatePoints } = require("./scoring");
+  // Calculate points
   const points = calculatePoints(scores, game.playerCount);
 
   // Update players
@@ -97,7 +97,6 @@ export function editHoleScores(
   }
 
   // Calculate points for the edited hole
-  const { calculatePoints } = require("./scoring");
   const newPoints = calculatePoints(newScores, game.playerCount);
 
   const holeIndex = holeNumber - 1;
