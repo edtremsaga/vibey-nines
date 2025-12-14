@@ -67,6 +67,13 @@ function GameScreen({
     setParInputValue(String(game.pars[game.currentHole - 1] || 4));
 
     if (holeChanged) {
+      // Reset scores when hole changes (unless we're loading a saved game state)
+      // Only reset if we're moving forward, not if we're loading a saved state
+      if (game.currentHole > previousHoleRef.current) {
+        setScores(Array(game.playerCount).fill(0));
+        setScoreErrors(Array(game.playerCount).fill(false));
+      }
+      
       // Reset scroll tracking when hole changes
       previousHoleRef.current = game.currentHole;
       hasUserScrolledRef.current = false;
@@ -214,6 +221,25 @@ function GameScreen({
     }
   };
 
+  const handleNextHole = useCallback(() => {
+    // Validate all scores are entered
+    if (!hasScores) {
+      return;
+    }
+
+    // Calculate points in the background and advance to next hole
+    const updatedGame = addHoleScores(game, scores);
+    saveGame(updatedGame);
+    onGameUpdate(updatedGame);
+
+    // Only reset scores if game is not complete (i.e., not on last hole)
+    // If game is complete, the view will change to results, so no need to reset
+    if (!updatedGame.isComplete) {
+      setScores(Array(game.playerCount).fill(0));
+      setScoreErrors(Array(game.playerCount).fill(false));
+    }
+  }, [hasScores, game, scores, onGameUpdate]);
+
   const handleKeyDown = useCallback((index: number, e: React.KeyboardEvent<HTMLInputElement>) => {
     // First check if it's a non-numeric character and block it
     handleScoreKeyDown(e, index);
@@ -232,22 +258,6 @@ function GameScreen({
       inputRefs.current[index - 1]?.focus();
     }
   }, [hasScores, handleNextHole, game.playerCount]);
-
-  const handleNextHole = useCallback(() => {
-    // Validate all scores are entered
-    if (!hasScores) {
-      return;
-    }
-
-    // Calculate points in the background and advance to next hole
-    const updatedGame = addHoleScores(game, scores);
-    saveGame(updatedGame);
-    onGameUpdate(updatedGame);
-
-    // Reset for next hole
-    setScores(Array(game.playerCount).fill(0));
-    setScoreErrors(Array(game.playerCount).fill(false));
-  }, [hasScores, game, scores, onGameUpdate]);
 
   return (
     <div className="golf-course-bg screen-enter flex min-h-screen flex-col px-4 py-4">
@@ -408,9 +418,20 @@ function GameScreen({
 
       {/* Next Hole Button */}
       <button
-        onClick={handleNextHole}
+        onClick={(e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          const allScoresEntered = scores.every((s) => s > 0);
+          
+          // Double-check scores are valid before proceeding
+          if (allScoresEntered && !game.isComplete) {
+            handleNextHole();
+          }
+        }}
         disabled={!hasScores}
+        aria-disabled={!hasScores}
         className="mb-4 flex min-h-[52px] w-full items-center justify-center rounded-xl bg-gradient-to-r from-green-600 to-green-700 px-4 py-2.5 text-base font-bold text-white shadow-lg transition-all hover:from-green-700 hover:to-green-800 hover:shadow-xl hover:scale-[1.02] active:scale-[0.98] focus:outline-none focus:ring-4 focus:ring-green-600/50 disabled:cursor-not-allowed disabled:from-gray-400 disabled:to-gray-500 disabled:shadow-none disabled:hover:scale-100 disabled:focus:ring-gray-400/50 dark:disabled:from-gray-600 dark:disabled:to-gray-700"
+        type="button"
       >
         {game.currentHole < game.holeCount ? "⛳ NEXT HOLE ⛳" : "🏆 VIEW RESULTS 🏆"}
       </button>
